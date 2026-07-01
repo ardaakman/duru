@@ -12,13 +12,15 @@ function ownerObj(o: K8sObject, idx: ReturnType<typeof buildIndex>): K8sObject |
   return (idx.byKind.get(r.kind) ?? []).find((x) => x.name === r.name && x.namespace === o.namespace);
 }
 function foldTarget(o: K8sObject, idx: ReturnType<typeof buildIndex>): K8sObject | undefined {
-  let cur: K8sObject | undefined = o;
-  const guard = new Set<string>();
-  while (cur && FOLDABLE.has(cur.kind)) {
-    if (guard.has(cur.uid)) return undefined; guard.add(cur.uid);
-    cur = ownerObj(cur, idx);
+  let cur: K8sObject = o;
+  const guard = new Set<string>([o.uid]);
+  while (FOLDABLE.has(cur.kind)) {
+    const owner = ownerObj(cur, idx);
+    if (!owner || guard.has(owner.uid)) break;
+    guard.add(owner.uid);
+    cur = owner;
   }
-  return cur && !FOLDABLE.has(cur.kind) ? cur : undefined;
+  return cur !== o ? cur : undefined;
 }
 function declaredReplicas(o: K8sObject): number | undefined {
   const r = o.spec?.replicas;

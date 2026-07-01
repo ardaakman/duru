@@ -28,3 +28,11 @@ test("unknown/CRD kind gets crd icon + a 'Kind · apiVersion' summary (never emp
   expect(m.nodes[0].icon).toBe("crd");
   expect(m.nodes[0].summary).toBe("CiliumNetworkPolicy · cilium.io/v2");
 });
+test("bare ReplicaSet with Pods folds Pods into the RS (no double-count)", () => {
+  const rs = mk({ uid: "ns/apps/ReplicaSet/rs", kind: "ReplicaSet", namespace: "ns", name: "rs", spec: { replicas: 2 } });
+  const p1 = mk({ uid: "ns/core/Pod/p1", kind: "Pod", namespace: "ns", name: "p1", ownerRefs: [{ kind: "ReplicaSet", name: "rs", uid: "ns/apps/ReplicaSet/rs" }] });
+  const p2 = mk({ uid: "ns/core/Pod/p2", kind: "Pod", namespace: "ns", name: "p2", ownerRefs: [{ kind: "ReplicaSet", name: "rs", uid: "ns/apps/ReplicaSet/rs" }] });
+  const m = buildModel([rs, p1, p2], []);
+  expect(m.nodes.map((n) => n.id)).toEqual(["ns/apps/ReplicaSet/rs"]);
+  expect(m.nodes[0].count).toBe(2);
+});

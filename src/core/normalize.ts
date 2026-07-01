@@ -14,7 +14,7 @@ export function normalize(docs: RawDoc[]): { objects: K8sObject[]; warnings: str
       uid: makeUid({ group, kind: o.kind, namespace: md.namespace, name: md.name, metaUid: md.uid }),
       apiVersion: o.apiVersion ?? "", group, version, kind: o.kind,
       namespace: md.namespace, name: md.name,
-      labels: md.labels ?? {}, annotations: md.annotations ?? {},
+      labels: md.labels ?? {}, annotations: raw.metadata?.annotations ?? {},
       ownerRefs: (md.ownerReferences ?? []).map((r: any) => ({ kind: r.kind, name: r.name, uid: r.uid })),
       spec: raw.spec, raw, source: d.source,
     };

@@ -19,12 +19,15 @@ export function dedupeKey(o: { group?: string; kind: string; namespace?: string;
 }
 
 const SECRET_FIELDS = ["data", "stringData"];
+const LAST_APPLIED = "kubectl.kubernetes.io/last-applied-configuration";
 export function redactSecret(obj: any): any {
   if (!obj || obj.kind !== "Secret") return obj;
   const c = structuredClone(obj);
   for (const f of SECRET_FIELDS) {
     if (c[f] && typeof c[f] === "object") for (const k of Object.keys(c[f])) c[f][k] = "<redacted>";
   }
+  // last-applied-configuration embeds the full manifest incl. base64 data — redact it too.
+  if (c.metadata?.annotations?.[LAST_APPLIED] !== undefined) c.metadata.annotations[LAST_APPLIED] = "<redacted>";
   return c;
 }
 

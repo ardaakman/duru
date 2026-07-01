@@ -2,7 +2,6 @@ import { test, expect } from "vitest";
 import { selectorRoutingLinker } from "./selectorRouting.js";
 import { buildIndex } from "../k8s.js";
 import { mk } from "../testutil.js";
-import type { K8sObject } from "../types.js";
 
 test("Service selects a workload via pod-template labels", () => {
   const svc = mk({ uid: "ns/core/Service/s", kind: "Service", namespace: "ns", name: "s", spec: { selector: { app: "m" } } });
@@ -24,4 +23,10 @@ test("NetworkPolicy podSelector {} targets ALL workloads in the namespace (not n
   const edges = selectorRoutingLinker([np, a, b, other], buildIndex([np, a, b, other]));
   const targets = edges.filter((e) => e.type === "selects").map((e) => e.target).sort();
   expect(targets).toEqual(["ns/apps/Deployment/a", "ns/apps/Deployment/b"]);
+});
+test("HPA routes to its scaleTargetRef workload", () => {
+  const hpa = mk({ uid: "ns/autoscaling/HorizontalPodAutoscaler/h", kind: "HorizontalPodAutoscaler", namespace: "ns", name: "h", spec: { scaleTargetRef: { kind: "Deployment", name: "m" } } });
+  const dep = mk({ uid: "ns/apps/Deployment/m", kind: "Deployment", namespace: "ns", name: "m" });
+  const edges = selectorRoutingLinker([hpa, dep], buildIndex([hpa, dep]));
+  expect(edges).toContainEqual({ id: "routes:ns/autoscaling/HorizontalPodAutoscaler/h->ns/apps/Deployment/m", source: "ns/autoscaling/HorizontalPodAutoscaler/h", target: "ns/apps/Deployment/m", type: "routes", label: "routes" });
 });
