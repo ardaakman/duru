@@ -101,5 +101,117 @@
   window.runLayout(document.getElementById("layout") ? document.getElementById("layout").value : "cluster");
   cy.ready(function () { setTimeout(function () { cy.fit(undefined, 50); }, 150); });
 
-  /*INTERACTIONS*/
+  // ---- header summary ----
+  document.getElementById("summary").textContent =
+    M.nodes.length + " resources · " + M.edges.length + " relationships" + (M.warnings && M.warnings.length ? " · " + M.warnings.length + " warnings" : "");
+
+  // ---- legends (kinds + namespaces) ----
+  function accentOf(kind) { var n = cy.nodes('[kind = "' + kind + '"]'); return n.nonempty() ? n[0].data("accent") : "#8f8f8f"; }
+  var kinds = {}; M.nodes.forEach(function (n) { kinds[n.kind] = (kinds[n.kind] || 0) + 1; });
+  var kindOn = {}; var kEl = document.getElementById("kinds");
+  Object.keys(kinds).sort().forEach(function (k) {
+    kindOn[k] = true;
+    var row = document.createElement("div"); row.className = "row"; row.dataset.k = k;
+    row.innerHTML = '<span class="sw" style="background:' + accentOf(k) + '"></span><span>' + k + '</span><span class="c">' + kinds[k] + '</span>';
+    row.onclick = function () { kindOn[k] = !kindOn[k]; row.classList.toggle("off", !kindOn[k]); applyFilter(); };
+    kEl.appendChild(row);
+  });
+  var nsOn = {}; var nsEl = document.getElementById("namespaces");
+  (M.groups || []).forEach(function (g) {
+    nsOn[g.id] = true;
+    var row = document.createElement("div"); row.className = "row"; row.dataset.ns = g.id;
+    var cnt = M.nodes.filter(function (n) { return n.group === g.id; }).length;
+    row.innerHTML = '<span>' + g.label + '</span><span class="c">' + cnt + '</span>';
+    row.onclick = function () { nsOn[g.id] = !nsOn[g.id]; row.classList.toggle("off", !nsOn[g.id]); applyFilter(); };
+    nsEl.appendChild(row);
+  });
+  var ekEl = document.getElementById("edgekinds");
+  Object.keys(EDGE).forEach(function (k) { var s = document.createElement("span"); s.innerHTML = '<i style="border-color:' + EDGE[k].c + '"></i>' + EDGE[k].l; ekEl.appendChild(s); });
+  document.getElementById("toggleAll").onclick = function () {
+    var anyOff = Object.keys(kindOn).some(function (k) { return !kindOn[k]; });
+    Object.keys(kindOn).forEach(function (k) { kindOn[k] = anyOff; });
+    document.querySelectorAll("#kinds .row").forEach(function (r) { r.classList.toggle("off", !kindOn[r.dataset.k]); });
+    applyFilter();
+  };
+  window.applyFilter = function () {
+    cy.batch(function () {
+      cy.nodes("[resource]").forEach(function (n) { n.style("display", (kindOn[n.data("kind")] && nsOn[n.data("group")]) ? "element" : "none"); });
+      cy.nodes(":parent").forEach(function (p) {
+        var vis = p.children().filter(function (c) { return c.style("display") === "element"; }).length;
+        p.style("display", vis ? "element" : "none");
+      });
+    });
+  };
+
+  // ---- selection + inspector ----
+  var detail = document.getElementById("detail");
+  window.clearHi = function () { cy.elements().removeClass("hi dim"); };
+  window.focusNode = function (n) {
+    clearHi();
+    var neigh = n.closedNeighborhood();
+    cy.elements().addClass("dim"); neigh.removeClass("dim").addClass("hi"); cy.nodes(":parent").removeClass("dim");
+    showDetail(n);
+  };
+  function esc(s) { return String(s == null ? "" : s).replace(/[&<>]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]; }); }
+  function showDetail(n) {
+    var d = n.data("_n");
+    var out = n.outgoers("edge"), inc = n.incomers("edge");
+    function conn(es, dir) { return es.map(function (e) {
+      var o = dir === "out" ? e.target() : e.source();
+      return '<button data-goto="' + o.id() + '">' + esc(o.data("kind")) + "/" + esc(o.data("label")) + "</button>"; }).join(""); }
+    var src = d.source ? '<div class="lbl">Source</div><a>' + esc(d.source.file) + (d.source.line ? ":" + d.source.line : "") + "</a>" : "";
+    detail.innerHTML =
+      '<button class="close" id="dClose" aria-label="Close inspector">✕</button><span class="chip">' + esc(d.kind) + "</span>" +
+      "<h2>" + esc(d.name) + "</h2>" +
+      '<div class="ns">' + (d.ns ? "namespace · " + esc(d.ns) : "cluster-scoped") + (d.nodeName ? " · node " + esc(d.nodeName) : "") + "</div>" +
+      '<div class="tabs"><button class="tabbtn active" data-tab="sum">Summary</button><button class="tabbtn" data-tab="man">Manifest</button></div>' +
+      '<div class="tab active" id="tab-sum">' +
+        "<p>" + esc(d.summary) + "</p>" +
+        (out.nonempty() ? '<div class="lbl">Depends on</div><div class="chips">' + conn(out, "out") + "</div>" : "") +
+        (inc.nonempty() ? '<div class="lbl">Used by</div><div class="chips">' + conn(inc, "in") + "</div>" : "") +
+        src +
+      "</div>" +
+      '<div class="tab" id="tab-man"><button class="btn copy" id="copym">copy</button><div class="lbl">manifest</div>' +
+        '<div class="code" id="mancode">' + esc(d.manifest || "(not available)") + "</div></div>";
+    detail.classList.add("show");
+    document.getElementById("dClose").onclick = function () { detail.classList.remove("show"); clearHi(); };
+    detail.querySelectorAll(".tabbtn").forEach(function (b) { b.onclick = function () {
+      detail.querySelectorAll(".tabbtn").forEach(function (x) { x.classList.remove("active"); });
+      detail.querySelectorAll(".tab").forEach(function (x) { x.classList.remove("active"); });
+      b.classList.add("active"); document.getElementById("tab-" + b.dataset.tab).classList.add("active");
+    }; });
+    var cp = document.getElementById("copym");
+    if (cp) cp.onclick = function () { try { navigator.clipboard.writeText(d.manifest || ""); cp.textContent = "copied"; } catch (e) {} };
+    detail.querySelectorAll("[data-goto]").forEach(function (b) { b.onclick = function () {
+      var t = cy.getElementById(b.dataset.goto);
+      cy.animate({ center: { eles: t }, zoom: Math.max(cy.zoom(), 1.0) }, { duration: 300 }); focusNode(t);
+    }; });
+  }
+  cy.on("tap", "node", function (e) { if (!e.target.isParent()) focusNode(e.target); });
+  cy.on("tap", function (e) { if (e.target === cy) { clearHi(); detail.classList.remove("show"); } });
+  cy.on("mouseover", "node", function (e) { if (!e.target.isParent()) e.target.connectedEdges().addClass("show"); });
+  cy.on("mouseout", "node", function (e) { e.target.connectedEdges().removeClass("show"); });
+
+  // ---- search ----
+  var search = document.getElementById("search");
+  search.oninput = function () {
+    var q = search.value.trim().toLowerCase(); cy.nodes().removeClass("match"); if (!q) return;
+    cy.nodes("[resource]").forEach(function (n) {
+      if ((n.data("label") + " " + n.data("kind") + " " + n.data("ns")).toLowerCase().indexOf(q) >= 0) n.addClass("match");
+    });
+  };
+  search.onkeydown = function (ev) { if (ev.key !== "Enter") return; var hit = cy.nodes(".match"); if (hit.nonempty()) { cy.animate({ fit: { eles: hit, padding: 80 } }, { duration: 350 }); if (hit.length === 1) focusNode(hit[0]); } };
+
+  // ---- toolbar ----
+  document.getElementById("layout").onchange = function (e) { clearHi(); detail.classList.remove("show"); window.runLayout(e.target.value); };
+  document.getElementById("btnFit").onclick = function () { cy.animate({ fit: { padding: 50 } }, { duration: 350 }); };
+  document.getElementById("btnReset").onclick = function () {
+    clearHi(); detail.classList.remove("show"); search.value = ""; cy.nodes().removeClass("match");
+    Object.keys(kindOn).forEach(function (k) { kindOn[k] = true; }); Object.keys(nsOn).forEach(function (k) { nsOn[k] = true; });
+    document.querySelectorAll("aside .row").forEach(function (r) { r.classList.remove("off"); });
+    applyFilter(); document.getElementById("layout").value = "cluster"; window.runLayout("cluster");
+  };
+  document.getElementById("zin").onclick = function () { cy.zoom({ level: cy.zoom() * 1.3, renderedPosition: { x: cy.width() / 2, y: cy.height() / 2 } }); };
+  document.getElementById("zout").onclick = function () { cy.zoom({ level: cy.zoom() / 1.3, renderedPosition: { x: cy.width() / 2, y: cy.height() / 2 } }); };
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape") { clearHi(); detail.classList.remove("show"); } });
 })();
