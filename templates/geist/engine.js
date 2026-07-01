@@ -112,7 +112,7 @@
   Object.keys(kinds).sort().forEach(function (k) {
     kindOn[k] = true;
     var row = document.createElement("div"); row.className = "row"; row.dataset.k = k;
-    row.innerHTML = '<span class="sw" style="background:' + accentOf(k) + '"></span><span>' + k + '</span><span class="c">' + kinds[k] + '</span>';
+    row.innerHTML = '<span class="sw" style="background:' + esc(accentOf(k)) + '"></span><span>' + esc(k) + '</span><span class="c">' + kinds[k] + '</span>';
     row.onclick = function () { kindOn[k] = !kindOn[k]; row.classList.toggle("off", !kindOn[k]); applyFilter(); };
     kEl.appendChild(row);
   });
@@ -121,7 +121,7 @@
     nsOn[g.id] = true;
     var row = document.createElement("div"); row.className = "row"; row.dataset.ns = g.id;
     var cnt = M.nodes.filter(function (n) { return n.group === g.id; }).length;
-    row.innerHTML = '<span>' + g.label + '</span><span class="c">' + cnt + '</span>';
+    row.innerHTML = '<span>' + esc(g.label) + '</span><span class="c">' + cnt + '</span>';
     row.onclick = function () { nsOn[g.id] = !nsOn[g.id]; row.classList.toggle("off", !nsOn[g.id]); applyFilter(); };
     nsEl.appendChild(row);
   });
@@ -152,13 +152,13 @@
     cy.elements().addClass("dim"); neigh.removeClass("dim").addClass("hi"); cy.nodes(":parent").removeClass("dim");
     showDetail(n);
   };
-  function esc(s) { return String(s == null ? "" : s).replace(/[&<>]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]; }); }
+  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
   function showDetail(n) {
     var d = n.data("_n");
     var out = n.outgoers("edge"), inc = n.incomers("edge");
     function conn(es, dir) { return es.map(function (e) {
       var o = dir === "out" ? e.target() : e.source();
-      return '<button data-goto="' + o.id() + '">' + esc(o.data("kind")) + "/" + esc(o.data("label")) + "</button>"; }).join(""); }
+      return '<button data-goto="' + esc(o.id()) + '">' + esc(o.data("kind")) + "/" + esc(o.data("label")) + "</button>"; }).join(""); }
     var src = d.source ? '<div class="lbl">Source</div><a>' + esc(d.source.file) + (d.source.line ? ":" + d.source.line : "") + "</a>" : "";
     detail.innerHTML =
       '<button class="close" id="dClose" aria-label="Close inspector">✕</button><span class="chip">' + esc(d.kind) + "</span>" +

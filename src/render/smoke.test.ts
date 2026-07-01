@@ -39,3 +39,30 @@ test("emitted HTML mounts in a browser with no console errors and inspector open
     expect(inspectorShown).toBe(true);
   } finally { await browser.close(); }
 }, 60000);
+
+test("model values cannot XSS the rendered page (legends + attributes escape)", async () => {
+  let puppeteer: any;
+  try { puppeteer = (await import("puppeteer")).default; } catch { console.warn("puppeteer absent — skipping"); return; }
+  let browser: any;
+  try { browser = await puppeteer.launch({ headless: true, args: ["--no-sandbox", "--allow-file-access-from-files"] }); }
+  catch { console.warn("chromium launch failed — skipping"); return; }
+  try {
+    const g = 'shop"><img src=y onerror="window.__x2=1">';
+    const model: any = {
+      nodes: [{ id: "x", kind: 'Evil<img src=x onerror="window.__x1=1">', name: "n", ns: "shop", group: g,
+        icon: "crd", accent: "#8f8f8f", tier: 2, summary: "s", manifest: "kind: Evil\n" }],
+      edges: [], groups: [{ id: g, label: g }], warnings: [],
+    };
+    const dir = await mkdtemp(join(tmpdir(), "kv-xss-"));
+    const file = join(dir, "x.html");
+    await writeFile(file, render(model));
+    const page = await browser.newPage();
+    await page.goto("file://" + file, { waitUntil: "networkidle0" });
+    await new Promise((r) => setTimeout(r, 800));
+    const r = await page.evaluate(() => ({ x1: (window as any).__x1, x2: (window as any).__x2,
+      imgs: document.querySelectorAll("#kinds img, #namespaces img").length }));
+    expect(r.x1, "kind legend XSS executed").toBeUndefined();
+    expect(r.x2, "namespace legend XSS executed").toBeUndefined();
+    expect(r.imgs, "injected <img> in legends").toBe(0);
+  } finally { await browser.close(); }
+}, 60000);

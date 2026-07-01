@@ -32,6 +32,6 @@ async function main() {
   console.error("kubeviz: " + model.nodes.length + " nodes, " + model.edges.length + " edges, " + model.warnings.length + " warnings" + (args.out ? " -> " + args.out + " (" + fmt + ")" : ""));
 }
 
-if (import.meta.url === "file://" + process.argv[1]) {
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
   main().catch((e) => { console.error("kubeviz: " + e.message); process.exit(1); });
 }
