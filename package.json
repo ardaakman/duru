@@ -5,7 +5,7 @@
   "license": "Apache-2.0",
   "type": "module",
   "bin": { "kubeviz": "dist/cli.js" },
-  "files": ["dist"],
+  "files": ["dist", "templates"],
   "scripts": {
     "test": "vitest run",
     "build": "tsc",
