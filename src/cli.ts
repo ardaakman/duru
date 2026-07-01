@@ -1,22 +1,37 @@
 #!/usr/bin/env node
 import { writeFile } from "node:fs/promises";
+import { fileURLToPath } from "node:url";
 import { run } from "./core/pipeline.js";
+import { render } from "./render/render.js";
 
-export function parseArgs(argv: string[]): { path?: string; out?: string } {
-  const oi = argv.indexOf("-o");
-  const out = oi >= 0 ? argv[oi + 1] : undefined;
-  const path = argv.find((a, i) => !a.startsWith("-") && (oi < 0 || i !== oi + 1));
-  return { path, out };
+// Flags that consume the FOLLOWING token as their value. Later plans register
+// --values/--set/--namespace/--title here so their values are never misread as the path.
+const VALUE_FLAGS = new Set(["-o", "--output"]);
+export function parseArgs(argv: string[]): { path?: string; out?: string; format?: "html" | "json" } {
+  const consumed = new Set<number>();
+  let out: string | undefined;
+  argv.forEach((a, i) => { if (VALUE_FLAGS.has(a)) { consumed.add(i + 1); if (a === "-o" || a === "--output") out = argv[i + 1]; } });
+  const path = argv.find((a, i) => !a.startsWith("-") && !consumed.has(i));
+  const format = argv.includes("--html") ? "html" : argv.includes("--json") ? "json" : undefined;
+  return { path, out, format };
+}
+
+export function chooseFormat(a: { out?: string; format?: "html" | "json" }): "html" | "json" {
+  if (a.format) return a.format;
+  if (a.out && a.out.endsWith(".html")) return "html";
+  return "json";
 }
 
 async function main() {
-  const { path, out } = parseArgs(process.argv.slice(2));
-  if (!path) { console.error("usage: kubeviz <path> [-o out.json]"); process.exit(2); }
-  const model = await run(path);
-  const json = JSON.stringify(model, null, 2);
-  if (out) await writeFile(out, json); else process.stdout.write(json + "\n");
-  console.error(`kubeviz: ${model.nodes.length} nodes, ${model.edges.length} edges, ${model.warnings.length} warnings`);
+  const args = parseArgs(process.argv.slice(2));
+  if (!args.path) { console.error("usage: kubeviz <path> [--output|-o <out.html|out.json>] [--html|--json]"); process.exit(2); }
+  const model = await run(args.path);
+  const fmt = chooseFormat(args);
+  const output = fmt === "html" ? render(model, { title: "kubeviz — " + args.path }) : JSON.stringify(model, null, 2);
+  if (args.out) await writeFile(args.out, output); else process.stdout.write(output + "\n");
+  console.error("kubeviz: " + model.nodes.length + " nodes, " + model.edges.length + " edges, " + model.warnings.length + " warnings" + (args.out ? " -> " + args.out + " (" + fmt + ")" : ""));
 }
-if (import.meta.url === `file://${process.argv[1]}`) {
+
+if (import.meta.url === "file://" + process.argv[1]) {
   main().catch((e) => { console.error("kubeviz: " + e.message); process.exit(1); });
 }
