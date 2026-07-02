@@ -54,3 +54,8 @@ html, body, #root { height: 100%; background: #fafafa; color: #171717; font-fami
 .kv-drop-kind { font: 10px ui-monospace, monospace; text-transform: uppercase; color: #8f8f8f; margin-right: 6px; }
 .kv-drop-ns { color: #8f8f8f; }
 .kv-crumbseg { display: inline-flex; align-items: center; gap: 6px; }
+
+.kv-legend-btn { display: flex; align-items: center; gap: 7px; margin: 3px 0; color: #4d4d4d; border: none; background: none; padding: 0; font: 11px Inter, system-ui; cursor: pointer; width: 100%; text-align: left; }
+.kv-legend-btn:hover { color: #171717; }
+.kv-legend-btn.off { opacity: .35; text-decoration: line-through; }
+.kv-edge-sw { width: 14px; height: 0; border-top: 2px dashed; flex: none; }

@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import ReactFlow, { Background, Controls, Panel, MarkerType, useReactFlow } from "reactflow";
 import type { GraphModel } from "../../../src/core/types.js";
 import { buildForest, visibleIds, layout, childCount, pathTo, rollupHealth } from "./tree.js";
+import { familyOf } from "./kinds.js";
+import { traceEdges, TRACE_COLORS } from "./trace.js";
 import { CardNode } from "./CardNode.js";
 import { Legend } from "./Legend.js";
 import { Inspector } from "./Inspector.js";
@@ -40,6 +42,8 @@ export function App({ model }: { model: GraphModel }) {
   const [root, setRoot] = useState<string | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
   const [focus, setFocus] = useState<{ id: string | null; n: number }>({ id: null, n: 0 });
+  const [dimmed, setDimmed] = useState<Set<string>>(new Set());
+  const toggleFamily = (f: string) => setDimmed((s) => { const n = new Set(s); n.has(f) ? n.delete(f) : n.add(f); return n; });
   const toggle = (id: string) => setCollapsed((s) => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; });
   const drill = (id: string) => { if (childCount(forest, id) > 0) { setCollapsed((s) => { const x = new Set(s); x.delete(id); return x; }); setRoot(id); } };
   // §2.1 contract: expand ancestors → retain drill root iff target inside → select → center.
@@ -75,8 +79,25 @@ export function App({ model }: { model: GraphModel }) {
     return { rfn, rfe };
   }, [forest, rollup, collapsed, root]);
   const nodes = useMemo(
-    () => base.rfn.map((n) => (n.id === selected ? { ...n, data: { ...n.data, selected: true } } : n)),
-    [base, selected]);
+    () => base.rfn.map((n) => {
+      const dim = dimmed.has(familyOf(n.data.kind));
+      const sel = n.id === selected;
+      return dim || sel ? { ...n, data: { ...n.data, selected: sel, dimmed: dim } } : n;
+    }),
+    [base, selected, dimmed]);
+  const trace = useMemo(() => {
+    const vis = new Set(base.rfn.map((n) => n.id));
+    return traceEdges(model, selected, vis);
+  }, [base, model, selected]);
+  const edges = useMemo(() => [
+    ...base.rfe,
+    ...trace.edges.map((e) => ({
+      id: "trace:" + e.id, source: e.source, target: e.target, type: "smoothstep", animated: true, label: e.type,
+      labelStyle: { font: "10px ui-monospace, monospace", fill: "#4d4d4d" }, labelBgStyle: { fill: "#fafafa" },
+      style: { stroke: TRACE_COLORS[e.type] ?? "#8f8f8f", strokeWidth: 1.6, strokeDasharray: "5 4" },
+      markerEnd: { type: MarkerType.ArrowClosed, color: TRACE_COLORS[e.type] ?? "#8f8f8f", width: 14, height: 14 },
+    })),
+  ], [base, trace]);
 
   const crumbs = (root ? pathTo(forest, root) : []).map((c) => ({ id: c, name: forest.byId.get(c)?.name ?? c }));
   const items = useMemo(
@@ -90,7 +111,7 @@ export function App({ model }: { model: GraphModel }) {
         hint="double-click a node to drill in · click ▸ to collapse · / to search" />
       <div className="kv-stage">
         <ReactFlow
-          nodes={nodes} edges={base.rfe} nodeTypes={nodeTypes} fitView minZoom={0.2} onlyRenderVisibleElements
+          nodes={nodes} edges={edges} nodeTypes={nodeTypes} fitView minZoom={0.2} onlyRenderVisibleElements
           onNodeClick={(_, n) => setSelected(n.id)}
           onNodeDoubleClick={(_, n) => drill(n.id)}
           onPaneClick={() => setSelected(null)}
@@ -98,7 +119,7 @@ export function App({ model }: { model: GraphModel }) {
         >
           <Background color="#e6e6e6" gap={22} />
           <Controls showInteractive={false} />
-          <Panel position="top-right"><Legend /></Panel>
+          <Panel position="bottom-right"><Legend activeTraceTypes={trace.types} dimmed={dimmed} onToggleFamily={toggleFamily} /></Panel>
           <FitOnChange rootSignal={root ?? "__all__"} focus={focus} />
         </ReactFlow>
         {selected ? <Inspector model={model} byId={forest.byId} id={selected} onClose={() => setSelected(null)} onSelect={reveal} /> : null}

@@ -25,3 +25,7 @@ export function badge(kind: string): { abbr: string; color: string } {
 }
 
 export const HEALTH = { ok: "#2ea043", warn: "#f5a623", error: "#e5484d", unknown: "#c4c4c4" } as const;
+
+export function familyOf(kind: string): keyof typeof FAMILY {
+  return MAP[kind]?.family ?? "identity";
+}

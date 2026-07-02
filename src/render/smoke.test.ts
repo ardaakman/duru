@@ -175,3 +175,66 @@ test("Escape closes the inspector", async () => {
     expect(open).toBe(0);
   } finally { await browser.close(); }
 }, 60000);
+
+test("trace overlay: selecting a Service draws dashed edges + edge legend; trace-closes on deselect", async () => {
+  const browser = await launch();
+  if (!browser) { console.warn("puppeteer/chromium unavailable — skipping"); return; }
+  try {
+    const model = await run("fixtures/dump/app.json");
+    const { page } = await pageFor(browser, render(model));
+    // The Service's only non-owns edges in this fixture are "selects" to its 4 pods,
+    // which sit behind the default-collapsed ReplicaSet. traceEdges only draws edges
+    // where both endpoints are visible, so expand it first (real user flow: expand,
+    // then select) — otherwise selecting the Service would legitimately draw nothing.
+    await page.evaluate(() => {
+      const rs = [...document.querySelectorAll(".kv-card")].find((c) => c.querySelector(".kv-badge")?.textContent === "rs");
+      (rs!.querySelector(".kv-chip") as HTMLElement).click();
+    });
+    await new Promise((r) => setTimeout(r, 500));
+    const before = await page.evaluate(() => document.querySelectorAll(".react-flow__edge").length);
+    await page.evaluate(() => {
+      const card = [...document.querySelectorAll(".kv-card")].find((c) => c.querySelector(".kv-badge")?.textContent === "svc");
+      (card as HTMLElement).click();
+    });
+    await new Promise((r) => setTimeout(r, 500));
+    const during = await page.evaluate(() => ({
+      edges: document.querySelectorAll(".react-flow__edge").length,
+      legend: document.querySelectorAll(".kv-legend-edges").length,
+    }));
+    expect(during.edges).toBeGreaterThan(before);   // trace edges appeared
+    expect(during.legend).toBe(1);                  // contextual edge legend visible
+    await page.keyboard.press("Escape");            // deterministic deselect (coordinate clicks can hit the legend)
+    await new Promise((r) => setTimeout(r, 500));
+    const after = await page.evaluate(() => ({
+      edges: document.querySelectorAll(".react-flow__edge").length,
+      legend: document.querySelectorAll(".kv-legend-edges").length,
+    }));
+    expect(after.edges).toBe(before);               // overlay cleared
+    expect(after.legend).toBe(0);
+  } finally { await browser.close(); }
+}, 60000);
+
+test("legend family click dims matching cards without moving them", async () => {
+  const browser = await launch();
+  if (!browser) { console.warn("puppeteer/chromium unavailable — skipping"); return; }
+  try {
+    const model = await run("fixtures/dump/app.json");
+    const { page } = await pageFor(browser, render(model));
+    const probe = () => page.evaluate(() => {
+      const card = [...document.querySelectorAll(".kv-card")].find((c) => c.querySelector(".kv-badge")?.textContent === "depl")!;
+      const r = (card.closest(".react-flow__node") as HTMLElement).getBoundingClientRect();
+      return { opacity: parseFloat(getComputedStyle(card).opacity), x: r.x, y: r.y };
+    });
+    const before = await probe();
+    await page.evaluate(() => {
+      const row = [...document.querySelectorAll(".kv-legend-btn")].find((b) => b.textContent!.includes("controllers"));
+      (row as HTMLElement).click();
+    });
+    await new Promise((r) => setTimeout(r, 400));
+    const after = await probe();
+    expect(before.opacity).toBe(1);
+    expect(after.opacity).toBeLessThan(0.5);        // dimmed…
+    expect(after.x).toBe(before.x);                 // …but did not move (no re-layout)
+    expect(after.y).toBe(before.y);
+  } finally { await browser.close(); }
+}, 60000);
