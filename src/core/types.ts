@@ -14,6 +14,7 @@ export interface Node {
   id: string; kind: string; name: string; ns: string; group: string;
   icon: string; accent: string; tier: number; count?: number;
   summary: string; nodeName?: string; parentId?: string; health?: Health;
+  labels?: Record<string, string>;
   manifest?: string; source?: { file: string; line?: number };
 }
 export interface GraphModel { nodes: Node[]; edges: Edge[]; groups: { id: string; label: string }[]; warnings: string[]; }

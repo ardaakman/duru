@@ -27,6 +27,7 @@ export function buildModel(objects: K8sObject[], edges: Edge[], warnings: string
         id: o.uid, kind: o.kind, name: o.name, ns: o.namespace ?? "", group: groupOf(o),
         icon: m.icon, accent: m.accent, tier: m.tier,
         count: replicas && replicas > 1 ? replicas : undefined,
+        labels: Object.keys(o.labels).length ? o.labels : undefined,
         summary: summarize(o), nodeName: o.spec?.nodeName,
         parentId: parentOf.get(o.uid), health: deriveHealth(o),
         manifest: yamlStringify(o.raw), source: o.source,

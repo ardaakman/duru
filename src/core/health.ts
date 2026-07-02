@@ -2,6 +2,12 @@ import type { K8sObject, Health } from "./types.js";
 
 const WORKLOADS = new Set(["Deployment", "ReplicaSet", "StatefulSet", "DaemonSet", "ReplicationController"]);
 
+// Kinds whose objects carry runtime health semantics. Everything else (ConfigMap,
+// Service, SA, PVC…) is a NON-VOTER in health rollups — not a neutral vote.
+export function healthCapable(kind: string): boolean {
+  return kind === "Pod" || WORKLOADS.has(kind);
+}
+
 function podHealth(st: any): Health {
   const phase = st.phase;
   if (phase === "Failed") return "error";

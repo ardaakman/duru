@@ -1,5 +1,5 @@
 import { test, expect } from "vitest";
-import { deriveHealth } from "./health.js";
+import { deriveHealth, healthCapable } from "./health.js";
 import { mk } from "./testutil.js";
 
 test("running+ready pod → ok; pending → warn; failed/crashloop → error", () => {
@@ -29,4 +29,9 @@ test("workload availability: all→ok, partial→warn, zero→error", () => {
 test("no status (manifest) → unknown", () => {
   const dep = mk({ uid: "ns/apps/Deployment/d", kind: "Deployment", namespace: "ns", name: "d", spec: { replicas: 2 } });
   expect(deriveHealth(dep)).toBe("unknown");
+});
+
+test("healthCapable: workloads and pods vote, config kinds do not", () => {
+  for (const k of ["Pod", "Deployment", "ReplicaSet", "StatefulSet", "DaemonSet", "ReplicationController"]) expect(healthCapable(k)).toBe(true);
+  for (const k of ["ConfigMap", "Service", "Secret", "ServiceAccount", "PersistentVolumeClaim", "Namespace", "Ingress"]) expect(healthCapable(k)).toBe(false);
 });
