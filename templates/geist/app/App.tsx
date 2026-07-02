@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import ReactFlow, { Background, Controls, Panel, MarkerType, useReactFlow } from "reactflow";
 import type { GraphModel } from "../../../src/core/types.js";
-import { buildForest, visibleIds, layout, childCount, pathTo } from "./tree.js";
+import { buildForest, visibleIds, layout, childCount, pathTo, rollupHealth } from "./tree.js";
 import { CardNode } from "./CardNode.js";
 import { Legend } from "./Legend.js";
 import { Inspector } from "./Inspector.js";
@@ -21,12 +21,14 @@ function FitOnChange({ signal }: { signal: string }) {
 
 export function App({ model }: { model: GraphModel }) {
   const forest = useMemo(() => buildForest(model), [model]);
+  const rollup = useMemo(() => rollupHealth(forest), [forest]);
   const [collapsed, setCollapsed] = useState<Set<string>>(() => {
     const c = new Set<string>();
     for (const [id, kids] of forest.childrenOf) {
       const n = forest.byId.get(id);
       if (n && ["ReplicaSet", "DaemonSet", "StatefulSet"].includes(n.kind) && kids.length > 3) c.add(id);
     }
+    if (model.nodes.length > 150) for (const r of forest.roots) c.add(r); // §5: big model → roots start collapsed (rollup keeps reds visible)
     return c;
   });
   const [root, setRoot] = useState<string | null>(null);
@@ -48,14 +50,16 @@ export function App({ model }: { model: GraphModel }) {
       const n = forest.byId.get(id)!;
       return {
         id, type: "card", position: pos.get(id)!,
-        data: { kind: n.kind, name: n.name, sub: n.nodeName, health: n.health, childCount: childCount(forest, id), collapsed: collapsed.has(id), selected: selected === id, onToggle: () => toggle(id) },
+        data: { kind: n.kind, name: n.name, sub: n.nodeName, health: n.health,
+          rollupWorst: rollup.get(id)?.worst, rollupUnobserved: rollup.get(id)?.hasUnobserved ?? false, dimmed: false,
+          childCount: childCount(forest, id), collapsed: collapsed.has(id), selected: selected === id, onToggle: () => toggle(id) },
       };
     });
     const vis = new Set(ids);
     const rfe = forest.ownEdges.filter((e) => vis.has(e.source) && vis.has(e.target))
       .map((e) => ({ id: e.id, source: e.source, target: e.target, type: "smoothstep", style: EDGE_STYLE, markerEnd: MARKER }));
     return { nodes: rfn, edges: rfe };
-  }, [forest, collapsed, root, selected]);
+  }, [forest, collapsed, root, selected, rollup]);
 
   const crumbs = root ? pathTo(forest, root) : [];
 
@@ -77,7 +81,7 @@ export function App({ model }: { model: GraphModel }) {
       </header>
       <div className="kv-stage">
         <ReactFlow
-          nodes={nodes} edges={edges} nodeTypes={nodeTypes} fitView minZoom={0.2}
+          nodes={nodes} edges={edges} nodeTypes={nodeTypes} fitView minZoom={0.2} onlyRenderVisibleElements
           onNodeClick={(_, n) => setSelected(n.id)}
           onNodeDoubleClick={(_, n) => drill(n.id)}
           onPaneClick={() => setSelected(null)}

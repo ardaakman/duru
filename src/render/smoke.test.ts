@@ -116,3 +116,18 @@ test("model values cannot XSS the rendered page (React escapes text)", async () 
     expect(r.imgs, "injected <img> rendered").toBe(0);
   } finally { await browser.close(); }
 }, 60000);
+
+test("collapsed ancestor surfaces a hidden crashing pod as a red dot", async () => {
+  const browser = await launch();
+  if (!browser) { console.warn("puppeteer/chromium unavailable — skipping"); return; }
+  try {
+    const model = await run("fixtures/dump/app.json");
+    const { page } = await pageFor(browser, render(model));
+    // RS has 4 pods → collapsed by default; pod web-7c9d-d is CrashLoopBackOff.
+    const dot = await page.evaluate(() => {
+      const card = [...document.querySelectorAll(".kv-card")].find((c) => c.textContent!.includes("web-7c9d"));
+      return card ? getComputedStyle(card.querySelector(".kv-dot")!).backgroundColor : null;
+    });
+    expect(dot).toBe("rgb(229, 72, 77)"); // #e5484d — error bubbled up through the collapse
+  } finally { await browser.close(); }
+}, 60000);
