@@ -4,38 +4,7 @@
 <title>kubeviz — Kubernetes map</title>
 <style>/*STYLES*/</style>
 </head><body>
-<div id="app">
-  <header>
-    <div class="mark"><span class="d"></span>kubeviz</div>
-    <span class="tag">ALPHA</span>
-    <span class="sub" id="summary"></span>
-    <span class="spacer"></span>
-    <button class="btn" id="btnFit">Fit</button>
-    <button class="btn" id="btnReset">Reset</button>
-  </header>
-  <aside>
-    <div class="eyebrow">Search</div>
-    <input id="search" class="search" placeholder="Find a resource…" autocomplete="off">
-    <div class="eyebrow">Layout</div>
-    <select id="layout" class="search">
-      <option value="cluster">Cluster — by namespace</option>
-      <option value="layered">Layered — by tier</option>
-    </select>
-    <div class="eyebrow">Kinds <span class="hint" id="toggleAll" style="cursor:pointer;float:right;text-transform:none;letter-spacing:0">toggle all</span></div>
-    <div class="legend" id="kinds"></div>
-    <div class="eyebrow">Namespaces</div>
-    <div class="legend" id="namespaces"></div>
-    <div class="eyebrow">Edges</div>
-    <div class="edgekinds" id="edgekinds"></div>
-  </aside>
-  <div id="stage">
-    <div id="cy"></div>
-    <div id="detail"></div>
-    <div class="zoombox"><button class="btn" id="zin" aria-label="Zoom in">+</button><button class="btn" id="zout" aria-label="Zoom out">−</button></div>
-    <div id="foot">drag = pan · scroll = zoom · click a node to inspect · Apache-2.0</div>
-  </div>
-</div>
-<script>/*VENDOR*/</script>
-<script>window.__ICONS__=/*ICONS*/;window.__MODEL__=/*MODEL*/;</script>
+<div id="root"></div>
+<script id="kubeviz-model" type="application/json">/*MODEL*/</script>
 <script>/*ENGINE*/</script>
 </body></html>
