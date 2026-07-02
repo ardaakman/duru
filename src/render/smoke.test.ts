@@ -95,3 +95,24 @@ test("inspector renders relationship chips and a chip reveals its hidden target"
     expect(after).toBeGreaterThan(before);
   } finally { await browser.close(); }
 }, 60000);
+
+test("model values cannot XSS the rendered page (React escapes text)", async () => {
+  const browser = await launch();
+  if (!browser) { console.warn("puppeteer/chromium unavailable — skipping"); return; }
+  try {
+    const evil = 'Evil<img src=x onerror="window.__x1=1">';
+    const model: any = {
+      nodes: [{ id: "x", kind: evil, name: 'n"><img src=y onerror="window.__x2=1">', ns: "shop", group: "shop",
+        icon: "crd", accent: "#8f8f8f", tier: 2, summary: "s", health: "unknown", manifest: "kind: Evil\n" }],
+      edges: [], groups: [{ id: "shop", label: "shop" }], warnings: [],
+    };
+    const { page } = await pageFor(browser, render(model));
+    const r = await page.evaluate(() => ({
+      x1: (window as any).__x1, x2: (window as any).__x2,
+      imgs: document.querySelectorAll(".kv-card img, .kv-inspector img").length,
+    }));
+    expect(r.x1, "kind XSS executed").toBeUndefined();
+    expect(r.x2, "name XSS executed").toBeUndefined();
+    expect(r.imgs, "injected <img> rendered").toBe(0);
+  } finally { await browser.close(); }
+}, 60000);

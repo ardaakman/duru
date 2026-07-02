@@ -1,0 +1,3 @@
+templates/geist/app/**
+**/*.test.ts
+scripts/
