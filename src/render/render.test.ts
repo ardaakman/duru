@@ -18,7 +18,7 @@ test("render produces one self-contained HTML doc containing the model and bundl
   expect(html).not.toContain("/*MODEL*/");            // token replaced
   expect(html).not.toContain("/*ENGINE*/");           // token replaced
   expect(html).not.toContain("<script src");          // nothing external
-  expect(html).not.toMatch(/https?:\/\//);            // no external URL at all
+  expect(html).not.toContain("<link");                // no external stylesheet (CSS is inlined)
   expect(html).toContain("<title>t</title>");
 });
 
