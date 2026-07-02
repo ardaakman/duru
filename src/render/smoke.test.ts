@@ -87,12 +87,17 @@ test("inspector renders relationship chips and a chip reveals its hidden target"
     const chips = await page.evaluate(() => document.querySelectorAll(".kv-inspector .kv-relchip").length);
     expect(clickedSvc, "no Service card found").toBe(true);
     expect(chips, "inspector rendered no relationship chips").toBeGreaterThan(0);
-    // clicking a chip reveals its (collapsed) target → more cards become visible
-    const before = await page.evaluate(() => document.querySelectorAll(".kv-card").length);
+    // clicking a chip reveals its (collapsed) target and selects it (§2.1 reveal contract).
+    // Note: reveal() also re-centers the viewport tightly on the target (this task's focus
+    // contract), and with onlyRenderVisibleElements that legitimately virtualizes distant
+    // cards (e.g. the clicked Service) out of the DOM — so "total card count" is no longer
+    // a valid proxy here. Assert the real invariant instead: the target itself is rendered
+    // and marked selected.
+    const chipName = await page.evaluate(() => document.querySelector(".kv-inspector .kv-relchip")!.textContent);
     await page.evaluate(() => (document.querySelector(".kv-inspector .kv-relchip") as HTMLElement).click());
     await new Promise((r) => setTimeout(r, 600));
-    const after = await page.evaluate(() => document.querySelectorAll(".kv-card").length);
-    expect(after).toBeGreaterThan(before);
+    const sel = await page.evaluate(() => document.querySelector(".kv-card.sel")?.textContent ?? null);
+    expect(sel, "chip did not reveal+select its target").toContain(chipName);
   } finally { await browser.close(); }
 }, 60000);
 
@@ -129,5 +134,44 @@ test("collapsed ancestor surfaces a hidden crashing pod as a red dot", async () 
       return card ? getComputedStyle(card.querySelector(".kv-dot")!).backgroundColor : null;
     });
     expect(dot).toBe("rgb(229, 72, 77)"); // #e5484d — error bubbled up through the collapse
+  } finally { await browser.close(); }
+}, 60000);
+
+test("search reveals a node buried under a collapsed ancestor and selects it", async () => {
+  const browser = await launch();
+  if (!browser) { console.warn("puppeteer/chromium unavailable — skipping"); return; }
+  try {
+    const model = await run("fixtures/dump/app.json");
+    const { page } = await pageFor(browser, render(model));
+    // web-7c9d-d is hidden under the default-collapsed ReplicaSet.
+    await page.type(".kv-search", "web-7c9d-d");
+    await new Promise((r) => setTimeout(r, 200));
+    await page.keyboard.press("Enter");
+    await new Promise((r) => setTimeout(r, 700));
+    const sel = await page.evaluate(() => {
+      const card = document.querySelector(".kv-card.sel");
+      return card ? card.textContent : null;
+    });
+    expect(sel, "search did not reveal+select the buried pod").toContain("web-7c9d-d");
+  } finally { await browser.close(); }
+}, 60000);
+
+test("Escape closes the inspector", async () => {
+  const browser = await launch();
+  if (!browser) { console.warn("puppeteer/chromium unavailable — skipping"); return; }
+  try {
+    const model = await run("fixtures/dump/app.json");
+    const { page } = await pageFor(browser, render(model));
+    // Click a REAL resource card (svc has a manifest) — not the first card, which is the
+    // synthetic namespace root; Task 6 appends a copy-button assertion that needs a manifest.
+    await page.evaluate(() => {
+      const card = [...document.querySelectorAll(".kv-card")].find((c) => c.querySelector(".kv-badge")?.textContent === "svc");
+      (card as HTMLElement).click();
+    });
+    await new Promise((r) => setTimeout(r, 300));
+    await page.keyboard.press("Escape");
+    await new Promise((r) => setTimeout(r, 300));
+    const open = await page.evaluate(() => document.querySelectorAll(".kv-inspector").length);
+    expect(open).toBe(0);
   } finally { await browser.close(); }
 }, 60000);

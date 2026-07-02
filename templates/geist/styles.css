@@ -44,3 +44,13 @@ html, body, #root { height: 100%; background: #fafafa; color: #171717; font-fami
 .kv-ring { box-shadow: 0 0 0 2px #c4c4c4; }
 .kv-dimmed { opacity: .15; }
 .kv-card { transition: box-shadow .15s, border-color .15s, opacity .2s; }
+
+.kv-searchwrap { position: relative; }
+.kv-search { width: 220px; border: 1px solid #ebebeb; border-radius: 8px; padding: 5px 10px; font: 12.5px Inter, system-ui; background: #fafafa; outline: none; }
+.kv-search:focus { border-color: #0070f3; background: #fff; }
+.kv-drop { position: absolute; top: 34px; left: 0; width: 300px; background: #fff; border: 1px solid #ebebeb; border-radius: 10px; box-shadow: 0 8px 30px rgba(0,0,0,.12); z-index: 30; overflow: hidden; }
+.kv-drop-row { display: block; width: 100%; text-align: left; border: none; background: #fff; padding: 7px 10px; font: 12.5px Inter, system-ui; cursor: pointer; color: #171717; }
+.kv-drop-row.on { background: #f5f5f5; }
+.kv-drop-kind { font: 10px ui-monospace, monospace; text-transform: uppercase; color: #8f8f8f; margin-right: 6px; }
+.kv-drop-ns { color: #8f8f8f; }
+.kv-crumbseg { display: inline-flex; align-items: center; gap: 6px; }
