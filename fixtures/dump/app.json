@@ -1,0 +1,15 @@
+{
+  "kind": "List",
+  "apiVersion": "v1",
+  "items": [
+    { "apiVersion": "v1", "kind": "Namespace", "metadata": { "name": "shop", "uid": "ns-shop" } },
+    { "apiVersion": "apps/v1", "kind": "Deployment", "metadata": { "name": "web", "namespace": "shop", "uid": "dep-web" }, "spec": { "replicas": 4, "selector": { "matchLabels": { "app": "web" } } }, "status": { "replicas": 4, "availableReplicas": 4 } },
+    { "apiVersion": "apps/v1", "kind": "ReplicaSet", "metadata": { "name": "web-7c9d", "namespace": "shop", "uid": "rs-web", "ownerReferences": [{ "kind": "Deployment", "name": "web", "uid": "dep-web" }] }, "spec": { "replicas": 4 }, "status": { "replicas": 4, "availableReplicas": 4 } },
+    { "apiVersion": "v1", "kind": "Pod", "metadata": { "name": "web-7c9d-a", "namespace": "shop", "uid": "pod-a", "labels": { "app": "web" }, "ownerReferences": [{ "kind": "ReplicaSet", "name": "web-7c9d", "uid": "rs-web" }] }, "spec": { "nodeName": "node-1" }, "status": { "phase": "Running", "containerStatuses": [{ "ready": true }] } },
+    { "apiVersion": "v1", "kind": "Pod", "metadata": { "name": "web-7c9d-b", "namespace": "shop", "uid": "pod-b", "labels": { "app": "web" }, "ownerReferences": [{ "kind": "ReplicaSet", "name": "web-7c9d", "uid": "rs-web" }] }, "status": { "phase": "Pending" } },
+    { "apiVersion": "v1", "kind": "Pod", "metadata": { "name": "web-7c9d-c", "namespace": "shop", "uid": "pod-c", "labels": { "app": "web" }, "ownerReferences": [{ "kind": "ReplicaSet", "name": "web-7c9d", "uid": "rs-web" }] }, "status": { "phase": "Running", "containerStatuses": [{ "ready": true }] } },
+    { "apiVersion": "v1", "kind": "Pod", "metadata": { "name": "web-7c9d-d", "namespace": "shop", "uid": "pod-d", "labels": { "app": "web" }, "ownerReferences": [{ "kind": "ReplicaSet", "name": "web-7c9d", "uid": "rs-web" }] }, "status": { "phase": "Running", "containerStatuses": [{ "ready": true }] } },
+    { "apiVersion": "v1", "kind": "Service", "metadata": { "name": "web", "namespace": "shop", "uid": "svc-web" }, "spec": { "selector": { "app": "web" } } },
+    { "apiVersion": "v1", "kind": "ConfigMap", "metadata": { "name": "web-cfg", "namespace": "shop", "uid": "cm-web" } }
+  ]
+}

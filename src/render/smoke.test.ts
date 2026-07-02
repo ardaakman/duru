@@ -37,3 +37,37 @@ test("tree mounts in a browser with no console errors and renders the visible ca
     expect(legend).toBe(1);
   } finally { await browser.close(); }
 }, 60000);
+
+test("collapse chip toggles the visible card count", async () => {
+  const browser = await launch();
+  if (!browser) { console.warn("puppeteer/chromium unavailable — skipping"); return; }
+  try {
+    const model = await run("fixtures/dump/app.json");
+    const { page } = await pageFor(browser, render(model));
+    const before = await page.evaluate(() => document.querySelectorAll(".kv-card").length);
+    const clicked = await page.evaluate(() => { const c = document.querySelector(".kv-chip") as HTMLElement | null; if (c) { c.click(); return true; } return false; });
+    await new Promise((r) => setTimeout(r, 500));
+    const after = await page.evaluate(() => document.querySelectorAll(".kv-card").length);
+    expect(clicked).toBe(true);
+    expect(after).not.toBe(before);
+  } finally { await browser.close(); }
+}, 60000);
+
+test("double-clicking a parent drills in and shows a breadcrumb", async () => {
+  const browser = await launch();
+  if (!browser) { console.warn("puppeteer/chromium unavailable — skipping"); return; }
+  try {
+    const model = await run("fixtures/dump/app.json");
+    const { page } = await pageFor(browser, render(model));
+    // double-click the first card that shows a collapse chip (i.e. has children)
+    await page.evaluate(() => {
+      const chip = document.querySelector(".kv-chip");
+      const card = chip ? chip.closest(".kv-card") : document.querySelector(".kv-card");
+      const ev = new MouseEvent("dblclick", { bubbles: true });
+      card!.dispatchEvent(ev);
+    });
+    await new Promise((r) => setTimeout(r, 700));
+    const crumbs = await page.evaluate(() => document.querySelectorAll(".kv-crumb").length);
+    expect(crumbs).toBeGreaterThan(0);
+  } finally { await browser.close(); }
+}, 60000);
