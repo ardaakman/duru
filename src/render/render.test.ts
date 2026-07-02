@@ -14,7 +14,7 @@ test("render produces one self-contained HTML doc containing the model and bundl
   expect(html).toContain('id="root"');
   expect(html).toContain('id="kubeviz-model"');
   expect(html).toContain("ns/apps/Deployment/web");   // model injected
-  expect(html).toContain("kv-boot");                  // bundle inlined (minimal-entry literal survives minify)
+  expect(html).toContain("controllers");               // bundle inlined (Legend family label survives minify)
   expect(html).not.toContain("/*MODEL*/");            // token replaced
   expect(html).not.toContain("/*ENGINE*/");           // token replaced
   expect(html).not.toContain("<script src");          // nothing external
@@ -30,5 +30,5 @@ test("injection-safe: </script> in model can't break out of the model block", ()
   const html = render(m);
   expect(html).not.toContain("</script><b>pwn");   // did NOT break out raw
   expect(html).toContain("\\u003c/script>");        // present only in escaped form
-  expect(html).toContain("kv-boot");                // bundle survived (split/join kept $&/$$)
+  expect(html).toContain("controllers");            // bundle survived (split/join kept $&/$$)
 });
