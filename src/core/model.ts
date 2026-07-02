@@ -1,68 +1,46 @@
 import type { K8sObject, Edge, GraphModel, Node } from "./types.js";
-import { buildIndex } from "./k8s.js";
 import { kindMeta, groupOf, KIND_META } from "./kinds.js";
+import { deriveHealth } from "./health.js";
 import { stringify as yamlStringify } from "yaml";
 
-const FOLDABLE = new Set(["ReplicaSet", "Pod"]);
-
-function ownerObj(o: K8sObject, idx: ReturnType<typeof buildIndex>): K8sObject | undefined {
-  const r = o.ownerRefs[0];
-  if (!r) return undefined;
-  if (r.uid && idx.byUid.has(r.uid)) return idx.byUid.get(r.uid);
-  return (idx.byKind.get(r.kind) ?? []).find((x) => x.name === r.name && x.namespace === o.namespace);
-}
-function foldTarget(o: K8sObject, idx: ReturnType<typeof buildIndex>): K8sObject | undefined {
-  let cur: K8sObject = o;
-  const guard = new Set<string>([o.uid]);
-  while (FOLDABLE.has(cur.kind)) {
-    const owner = ownerObj(cur, idx);
-    if (!owner || guard.has(owner.uid)) break;
-    guard.add(owner.uid);
-    cur = owner;
-  }
-  return cur !== o ? cur : undefined;
-}
 function declaredReplicas(o: K8sObject): number | undefined {
   const r = o.spec?.replicas;
   return typeof r === "number" ? r : undefined;
 }
-function summarize(o: K8sObject, count?: number): string {
-  // §13.14: built-in kinds → kind; unknown/CRD → "Kind · apiVersion" so the
-  // inspector is never empty for the CRDs that make real repos interesting.
-  const base = o.kind in KIND_META ? o.kind : `${o.kind} · ${o.apiVersion || "?"}`;
-  return count && count > 1 ? `${base} · ×${count}` : base;
+// Inspector "what it is": built-in kinds → kind; unknown/CRD → "Kind · apiVersion".
+function summarize(o: K8sObject): string {
+  return o.kind in KIND_META ? o.kind : `${o.kind} · ${o.apiVersion || "?"}`;
 }
 
 export function buildModel(objects: K8sObject[], edges: Edge[], warnings: string[] = []): GraphModel {
-  const idx = buildIndex(objects);
-  const foldMap = new Map<string, string>(); // childUid -> workloadUid
-  const podCount = new Map<string, number>();
-  for (const o of objects) {
-    if (!FOLDABLE.has(o.kind)) continue;
-    const t = foldTarget(o, idx);
-    if (t) { foldMap.set(o.uid, t.uid); if (o.kind === "Pod") podCount.set(t.uid, (podCount.get(t.uid) ?? 0) + 1); }
-  }
-  const visible = objects.filter((o) => !foldMap.has(o.uid));
-  const nodes: Node[] = visible.map((o) => {
-    const m = kindMeta(o.kind);
-    const count = podCount.get(o.uid) ?? declaredReplicas(o);
-    return {
-      id: o.uid, kind: o.kind, name: o.name, ns: o.namespace ?? "", group: groupOf(o),
-      icon: m.icon, accent: m.accent, tier: m.tier,
-      count: count && count > 1 ? count : undefined,
-      summary: summarize(o, count), nodeName: o.spec?.nodeName,
-      manifest: yamlStringify(o.raw), source: o.source,
-    };
-  });
-  const resolve = (uid: string) => foldMap.get(uid) ?? uid;
+  // parentId = the source of this object's owns edge (ownership tree parent).
+  const parentOf = new Map<string, string>();
+  for (const e of edges) if (e.type === "owns") parentOf.set(e.target, e.source);
+
+  // Namespaces become synthetic group roots in the renderer — drop the real objects.
+  const nodes: Node[] = objects
+    .filter((o) => o.kind !== "Namespace")
+    .map((o) => {
+      const m = kindMeta(o.kind);
+      const replicas = declaredReplicas(o);
+      return {
+        id: o.uid, kind: o.kind, name: o.name, ns: o.namespace ?? "", group: groupOf(o),
+        icon: m.icon, accent: m.accent, tier: m.tier,
+        count: replicas && replicas > 1 ? replicas : undefined,
+        summary: summarize(o), nodeName: o.spec?.nodeName,
+        parentId: parentOf.get(o.uid), health: deriveHealth(o),
+        manifest: yamlStringify(o.raw), source: o.source,
+      };
+    });
+
+  // Keep all edges (dedupe, drop self loops). No folding/resolution.
   const seen = new Set<string>();
   const outEdges: Edge[] = [];
   for (const e of edges) {
-    const s = resolve(e.source), t = resolve(e.target);
-    if (s === t) continue;
-    const id = `${e.type}:${s}->${t}`;
+    if (e.source === e.target) continue;
+    const id = `${e.type}:${e.source}->${e.target}`;
     if (seen.has(id)) continue; seen.add(id);
-    outEdges.push({ ...e, id, source: s, target: t });
+    outEdges.push({ ...e, id });
   }
   const groupIds = [...new Set(nodes.map((n) => n.group))];
   return { nodes, edges: outEdges, groups: groupIds.map((id) => ({ id, label: id })), warnings };

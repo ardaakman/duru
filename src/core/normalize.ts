@@ -16,7 +16,7 @@ export function normalize(docs: RawDoc[]): { objects: K8sObject[]; warnings: str
       namespace: md.namespace, name: md.name,
       labels: md.labels ?? {}, annotations: raw.metadata?.annotations ?? {},
       ownerRefs: (md.ownerReferences ?? []).map((r: any) => ({ kind: r.kind, name: r.name, uid: r.uid })),
-      spec: raw.spec, raw, source: d.source,
+      spec: raw.spec, status: raw.status, raw, source: d.source,
     };
     const key = dedupeKey({ group, kind: o.kind, namespace: md.namespace, name: md.name });
     if (seen.has(key)) warnings.push(`collision: ${key} (last doc wins)`);
