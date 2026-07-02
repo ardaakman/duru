@@ -71,3 +71,27 @@ test("double-clicking a parent drills in and shows a breadcrumb", async () => {
     expect(crumbs).toBeGreaterThan(0);
   } finally { await browser.close(); }
 }, 60000);
+
+test("inspector renders relationship chips and a chip reveals its hidden target", async () => {
+  const browser = await launch();
+  if (!browser) { console.warn("puppeteer/chromium unavailable — skipping"); return; }
+  try {
+    const model = await run("fixtures/dump/app.json");
+    const { page } = await pageFor(browser, render(model));
+    // click the Service card (its badge text is "svc")
+    const clickedSvc = await page.evaluate(() => {
+      const card = [...document.querySelectorAll(".kv-card")].find((c) => c.querySelector(".kv-badge")?.textContent === "svc");
+      if (!card) return false; (card as HTMLElement).click(); return true;
+    });
+    await new Promise((r) => setTimeout(r, 300));
+    const chips = await page.evaluate(() => document.querySelectorAll(".kv-inspector .kv-relchip").length);
+    expect(clickedSvc, "no Service card found").toBe(true);
+    expect(chips, "inspector rendered no relationship chips").toBeGreaterThan(0);
+    // clicking a chip reveals its (collapsed) target → more cards become visible
+    const before = await page.evaluate(() => document.querySelectorAll(".kv-card").length);
+    await page.evaluate(() => (document.querySelector(".kv-inspector .kv-relchip") as HTMLElement).click());
+    await new Promise((r) => setTimeout(r, 600));
+    const after = await page.evaluate(() => document.querySelectorAll(".kv-card").length);
+    expect(after).toBeGreaterThan(before);
+  } finally { await browser.close(); }
+}, 60000);

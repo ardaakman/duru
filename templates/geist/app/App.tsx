@@ -4,14 +4,12 @@ import type { GraphModel } from "../../../src/core/types.js";
 import { buildForest, visibleIds, layout, childCount, pathTo } from "./tree.js";
 import { CardNode } from "./CardNode.js";
 import { Legend } from "./Legend.js";
+import { Inspector } from "./Inspector.js";
 
 const nodeTypes = { card: CardNode };
 const EDGE_STYLE = { stroke: "#cfcfcf", strokeWidth: 1.4 };
 const MARKER = { type: MarkerType.ArrowClosed, color: "#cfcfcf", width: 16, height: 16 };
 
-// Rendered INSIDE <ReactFlow> so it can use the flow instance. Re-frames the canvas
-// whenever the drill root or the visible-node set changes (spec §4: drill fitView animates).
-// A short timeout lets React Flow measure the new custom nodes before framing.
 function FitOnChange({ signal }: { signal: string }) {
   const rf = useReactFlow();
   useEffect(() => {
@@ -35,6 +33,13 @@ export function App({ model }: { model: GraphModel }) {
   const [selected, setSelected] = useState<string | null>(null);
   const toggle = (id: string) => setCollapsed((s) => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; });
   const drill = (id: string) => { if (childCount(forest, id) > 0) { setCollapsed((s) => { const x = new Set(s); x.delete(id); return x; }); setRoot(id); } };
+  // Reveal a (possibly hidden/off-screen) node: exit any drill, expand its whole
+  // ancestor chain, then select it — used by inspector relationship chips (spec §6).
+  const reveal = (id: string) => {
+    setCollapsed((s) => { const n = new Set(s); for (const a of pathTo(forest, id)) n.delete(a); return n; });
+    setRoot(null);
+    setSelected(id);
+  };
 
   const { nodes, edges } = useMemo(() => {
     const ids = visibleIds(forest, collapsed, root);
@@ -83,6 +88,7 @@ export function App({ model }: { model: GraphModel }) {
           <Panel position="top-right"><Legend /></Panel>
           <FitOnChange signal={root ?? "__all__"} />
         </ReactFlow>
+        {selected ? <Inspector model={model} byId={forest.byId} id={selected} onClose={() => setSelected(null)} onSelect={reveal} /> : null}
       </div>
     </div>
   );
