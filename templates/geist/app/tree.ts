@@ -70,7 +70,8 @@ export function pathTo(f: Forest, id: string): string[] {
   const parentById = new Map<string, string>();
   for (const [p, cs] of f.childrenOf) for (const c of cs) parentById.set(c, p);
   const chain: string[] = [];
+  const seen = new Set<string>();               // guard against a parentId cycle in malformed dumps
   let cur: string | undefined = id;
-  while (cur) { chain.unshift(cur); cur = parentById.get(cur); }
+  while (cur && !seen.has(cur)) { seen.add(cur); chain.unshift(cur); cur = parentById.get(cur); }
   return chain;
 }

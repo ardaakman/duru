@@ -34,3 +34,17 @@ test("childCount and pathTo", () => {
   expect(childCount(f, "p1")).toBe(0);
   expect(pathTo(f, "p1")).toEqual(["group:shop", "dep", "rs", "p1"]);
 });
+
+test("pathTo terminates on a parentId cycle (malformed dump)", () => {
+  const cyc: GraphModel = {
+    nodes: [
+      { id: "A", kind: "Pod", name: "a", ns: "x", group: "x", icon: "", accent: "", tier: 2, summary: "Pod", parentId: "B" },
+      { id: "B", kind: "Pod", name: "b", ns: "x", group: "x", icon: "", accent: "", tier: 2, summary: "Pod", parentId: "A" },
+    ],
+    edges: [], groups: [{ id: "x", label: "x" }], warnings: [],
+  };
+  const f = buildForest(cyc);
+  const path = pathTo(f, "A");
+  expect(path.length).toBeLessThanOrEqual(2);   // terminates, no infinite loop
+  expect(path).toContain("A");
+});
