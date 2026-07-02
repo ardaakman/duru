@@ -103,19 +103,20 @@ export function App({ model }: { model: GraphModel }) {
   const items = useMemo(
     () => [...forest.byId.values()].map((n) => ({ id: n.id, name: n.name, kind: n.kind, ns: n.ns })),
     [forest]);
+  const manifestMode = useMemo(() => model.nodes.every((n) => !n.health || n.health === "unknown"), [model]);
 
   return (
     <div className="kv-app">
       <TopBar items={items} crumbs={crumbs} onAll={() => setRoot(null)}
         onCrumb={(id) => setRoot(id)} onPick={reveal}
-        hint="double-click a node to drill in · click ▸ to collapse · / to search" />
+        hint="double-click a node to drill in · click ▸ to collapse · / to search"
+        warnings={model.warnings} manifestMode={manifestMode} />
       <div className="kv-stage">
         <ReactFlow
           nodes={nodes} edges={edges} nodeTypes={nodeTypes} fitView minZoom={0.2} onlyRenderVisibleElements
           onNodeClick={(_, n) => setSelected(n.id)}
           onNodeDoubleClick={(_, n) => drill(n.id)}
           onPaneClick={() => setSelected(null)}
-          proOptions={{ hideAttribution: true }}
         >
           <Background color="#e6e6e6" gap={22} />
           <Controls showInteractive={false} />

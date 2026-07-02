@@ -169,6 +169,8 @@ test("Escape closes the inspector", async () => {
       (card as HTMLElement).click();
     });
     await new Promise((r) => setTimeout(r, 300));
+    const hasCopy = await page.evaluate(() => document.querySelectorAll(".kv-inspector .kv-copy").length);
+    expect(hasCopy, "manifest copy button missing (spec F9)").toBe(1);
     await page.keyboard.press("Escape");
     await new Promise((r) => setTimeout(r, 300));
     const open = await page.evaluate(() => document.querySelectorAll(".kv-inspector").length);

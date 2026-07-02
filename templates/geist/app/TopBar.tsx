@@ -2,12 +2,14 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 type Item = { id: string; name: string; kind: string; ns: string };
 
-export function TopBar({ items, crumbs, onCrumb, onAll, onPick, hint }: {
+export function TopBar({ items, crumbs, onCrumb, onAll, onPick, hint, warnings, manifestMode }: {
   items: Item[]; crumbs: { id: string; name: string }[];
   onCrumb: (id: string) => void; onAll: () => void; onPick: (id: string) => void; hint: string;
+  warnings: string[]; manifestMode: boolean;
 }) {
   const [q, setQ] = useState("");
   const [active, setActive] = useState(0);
+  const [showWarn, setShowWarn] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const matches = useMemo(() => {
     const s = q.trim().toLowerCase();
@@ -26,6 +28,13 @@ export function TopBar({ items, crumbs, onCrumb, onAll, onPick, hint }: {
   return (
     <header className="kv-bar">
       <div className="kv-mark"><span className="kv-d" />kubeviz</div>
+      {manifestMode ? <span className="kv-tag">manifest view · live state unknown</span> : null}
+      {warnings.length ? (
+        <span className="kv-warnwrap">
+          <button className="kv-warnchip" onClick={() => setShowWarn((v) => !v)}>⚠ {warnings.length}</button>
+          {showWarn ? <div className="kv-pop">{warnings.map((w, i) => <div key={i} className="kv-pop-row">{w}</div>)}</div> : null}
+        </span>
+      ) : null}
       <div className="kv-searchwrap">
         <input ref={inputRef} className="kv-search" placeholder="search  /" value={q} aria-label="Search resources"
           onChange={(e) => setQ(e.target.value)}

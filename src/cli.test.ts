@@ -2,9 +2,9 @@ import { test, expect } from "vitest";
 import { parseArgs, chooseFormat } from "./cli.js";
 
 test("parseArgs handles both orderings", () => {
-  expect(parseArgs(["a.yaml", "-o", "o.json"])).toEqual({ path: "a.yaml", out: "o.json" });
-  expect(parseArgs(["-o", "o.json", "a.yaml"])).toEqual({ path: "a.yaml", out: "o.json" });
-  expect(parseArgs(["a.yaml"])).toEqual({ path: "a.yaml", out: undefined });
+  expect(parseArgs(["a.yaml", "-o", "o.json"])).toEqual({ path: "a.yaml", out: "o.json", slim: false });
+  expect(parseArgs(["-o", "o.json", "a.yaml"])).toEqual({ path: "a.yaml", out: "o.json", slim: false });
+  expect(parseArgs(["a.yaml"])).toEqual({ path: "a.yaml", out: undefined, slim: false });
 });
 
 test("chooseFormat: -o extension decides, flags override, default json", () => {

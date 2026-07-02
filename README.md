@@ -33,6 +33,20 @@ The renderer is a React + React Flow app bundled by esbuild into
 `templates/geist/engine.bundle.js` and inlined into the output. `npm run build`
 runs the web bundle then `tsc`; `npm test` builds the bundle first (`pretest`).
 
+## Health semantics
+
+Dots: green = healthy, amber = degraded/pending, red = failed/crashlooping, grey = **unobserved**
+(the input carried no `status` — plain manifests, or a dump object without one; kubeviz reads a
+static file, so there is no "fetch failed" state). Rollup: a **collapsed** node's dot shows the
+worst health among its pod/workload descendants; a green dot with a grey ring means "healthy
+where observed, some pods/workloads unobserved". Config objects (ConfigMaps, Services, …) have
+no runtime health and never affect rollup.
+
+## Large clusters
+
+`kviz cluster.json -o map.html --slim` omits embedded manifests (the inspector hides its
+manifest section). Without `--slim`, kubeviz warns on stderr when the output exceeds 5 MB.
+
 ## Design
 Pipeline: ingest → normalize → relate (linkers) → model → render. See
 `docs/superpowers/specs` for the full spec.
