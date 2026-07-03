@@ -1,7 +1,7 @@
 {
   "name": "headlamp-plugin-duru",
   "version": "0.1.0",
-  "description": "Your Headlamp plugin",
+  "description": "duru — a live Kubernetes map for Headlamp: ownership tree with health rollup, drill-down, and a topology-gated refresh",
   "scripts": {
     "prebuild": "node scripts/gen-styles.mjs",
     "prestart": "node scripts/gen-styles.mjs",

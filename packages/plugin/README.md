@@ -1,15 +1,23 @@
-# duru
+# headlamp-plugin-duru
 
-This is the default template README for [Headlamp Plugins](https://github.com/kubernetes-sigs/headlamp).
+The [duru](../../README.md) map as a [Headlamp](https://headlamp.dev) plugin:
+a live ownership tree of the current cluster — health rolled up onto every
+collapsed node, double-click drill-down, search, an inspector for
+relationships, and a `↻` pill that gates re-layout so the map never shifts
+under you while pods churn.
 
-- The description of your plugin should go here.
-- You should also edit the package.json file meta data (like name and description).
+## Build
 
-## Developing Headlamp plugins
+```bash
+npm run build   # from the repo root (builds @duru/core first)
+```
 
-For more information on developing Headlamp plugins, please refer to:
+produces `dist/main.js`. See the root README for install and the kind-cluster
+demo. Developed with the official `@kinvolk/headlamp-plugin` toolchain
+(`npm start` for hot reload; see the
+[plugin development docs](https://headlamp.dev/docs/latest/development/plugins/)).
 
-- [Getting Started](https://headlamp.dev/docs/latest/development/plugins/), How to create a new Headlamp plugin.
-- [API Reference](https://headlamp.dev/docs/latest/development/api/), API documentation for what you can do
-- [UI Component Storybook](https://headlamp.dev/docs/latest/development/frontend/#storybook), pre-existing components you can use when creating your plugin.
-- [Plugin Examples](https://github.com/kubernetes-sigs/headlamp/tree/main/plugins/examples), Example plugins you can look at to see how it's done.
+## License
+
+Apache-2.0 — see the repository [LICENSE](../../LICENSE) and
+[THIRD-PARTY-NOTICES.md](../../THIRD-PARTY-NOTICES.md).
