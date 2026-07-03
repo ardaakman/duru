@@ -3,3 +3,4 @@ dist/
 packages/plugin/src/styles.ts
 *.tgz
 .superpowers/
+.eslintcache
