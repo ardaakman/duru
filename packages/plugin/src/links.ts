@@ -1,5 +1,5 @@
-import { Router } from "@kinvolk/headlamp-plugin/lib";
 import type { Node } from "@duru/core";
+import { Router } from "@kinvolk/headlamp-plugin/lib";
 
 // Headlamp route names for built-in details pages. VERIFIED AT IMPLEMENTATION TIME
 // against node_modules/@kinvolk/headlamp-plugin/lib: KubeObject.detailsRoute defaults

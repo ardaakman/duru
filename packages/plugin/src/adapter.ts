@@ -1,5 +1,5 @@
 import type { GraphModel, RawDoc } from "@duru/core";
-import { normalize, relate, buildModel } from "@duru/core";
+import { buildModel,normalize, relate } from "@duru/core";
 
 // Live objects (KubeObject.jsonData) are plain k8s JSON — the same shape the
 // dump adapter consumed. No file provenance in live mode.
