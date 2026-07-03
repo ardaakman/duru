@@ -66,3 +66,9 @@
 .duru-pop-row { font: 11px ui-monospace, monospace; color: #4d4d4d; padding: 3px 4px; word-break: break-all; }
 .duru-copy { float: right; font: 10px ui-monospace, monospace; border: 1px solid #ebebeb; background: #fff; border-radius: 5px; padding: 1px 7px; cursor: pointer; color: #4d4d4d; }
 .duru-copy:hover { border-color: #0070f3; color: #0070f3; }
+
+.duru-pill { font: 11px ui-monospace, monospace; color: #0a5c2e; background: #e9f7ef; border: 1px solid #2ea04355; border-radius: 20px; padding: 3px 10px; cursor: pointer; }
+.duru-pill:hover { border-color: #2ea043; }
+.duru-open { display: inline-block; font: 12px Inter, system-ui; color: #0070f3; text-decoration: none; border: 1px solid #ebebeb; border-radius: 6px; padding: 3px 9px; }
+.duru-open:hover { border-color: #0070f3; }
+.duru-load { display: flex; align-items: center; justify-content: center; height: 100%; color: #8f8f8f; font: 13px Inter, system-ui; }

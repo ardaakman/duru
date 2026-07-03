@@ -1,6 +1,6 @@
-import { test, expect } from "vitest";
-import { toRawDocs, buildLiveModel } from "./adapter";
 import type { GraphModel } from "@duru/core";
+import { expect,test } from "vitest";
+import { buildLiveModel,toRawDocs } from "./adapter";
 
 const dep = { apiVersion: "apps/v1", kind: "Deployment", metadata: { name: "web", namespace: "shop", uid: "dep-web", labels: { app: "web" } }, spec: { replicas: 2 }, status: { replicas: 2, availableReplicas: 2 } };
 const rs = { apiVersion: "apps/v1", kind: "ReplicaSet", metadata: { name: "web-1", namespace: "shop", uid: "rs-web", ownerReferences: [{ kind: "Deployment", name: "web", uid: "dep-web" }] }, spec: { replicas: 2 } };
@@ -14,7 +14,6 @@ test("toRawDocs flattens per-kind lists, skipping nulls", () => {
 
 test("buildLiveModel: live objects → ownership tree with health, NO manifests, secrets never carried", () => {
   const m: GraphModel = buildLiveModel([[dep], [rs], [pod], [svc], [secret]], []);
-  const byId = new Map(m.nodes.map((n) => [n.id, n]));
   const rsNode = m.nodes.find((n) => n.kind === "ReplicaSet")!;
   const podNode = m.nodes.find((n) => n.kind === "Pod")!;
   expect(rsNode.parentId).toBe(m.nodes.find((n) => n.kind === "Deployment")!.id);

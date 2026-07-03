@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { K8s } from "@kinvolk/headlamp-plugin/lib";
 import type { GraphModel, Health } from "@duru/core";
 import { diffModels } from "@duru/core";
+import { K8s } from "@kinvolk/headlamp-plugin/lib";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { buildLiveModel } from "./adapter";
 
 const KINDS: [string, any][] = [
@@ -36,7 +36,7 @@ export function useClusterModel() {
     if (error) { warnings.push(`${KINDS[i][0]} unavailable: ${String(error)}`); return null; }
     return items ? items.map((o: any) => o.jsonData) : null;
   });
-  const loading = displayed === null && results.some(([items, error], _i) => items === null && !error);
+  const loading = displayed === null && results.some(([items, error]) => items === null && !error);
 
   // Debounce trigger: depend on each kind's `items` array IDENTITY, not a length-derived
   // string. Verified against the installed lib (useKubeObjectList.js): useList()'s `items`

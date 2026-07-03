@@ -1,11 +1,8 @@
-import { K8s } from "@kinvolk/headlamp-plugin/lib";
+import { App } from "./App";
+import { useClusterModel } from "./useClusterModel";
 
 export function DuruMap() {
-  const [pods, error] = K8s.ResourceClasses.Pod.useList();
-  return (
-    <div className="duru-app" style={{ padding: 24 }}>
-      <h2>duru</h2>
-      {error ? <p>error: {String(error)}</p> : <p>{pods === null ? "loading…" : `${pods.length} pods live`}</p>}
-    </div>
-  );
+  const { model, pending, refresh, structureRev, loading, warnings } = useClusterModel();
+  if (loading || !model) return <div className="duru-app"><div className="duru-load">connecting to cluster…</div></div>;
+  return <App model={model} pending={pending} onRefresh={refresh} structureRev={structureRev} warnings={warnings} />;
 }
