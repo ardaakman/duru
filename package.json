@@ -1,0 +1,15 @@
+{
+  "name": "duru-monorepo",
+  "private": true,
+  "version": "0.1.0",
+  "license": "Apache-2.0",
+  "workspaces": ["packages/*"],
+  "scripts": {
+    "build": "npm run build --workspace @duru/core --if-present && npm run build --workspace headlamp-plugin-duru --if-present",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
+  }
+}
