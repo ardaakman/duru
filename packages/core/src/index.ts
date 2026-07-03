@@ -7,4 +7,4 @@ export { deriveHealth, healthCapable } from "./health.js";
 export { KIND_META, CRD_TIER_HINTS, kindMeta, CLUSTER_SCOPED, groupOf } from "./kinds-meta.js";
 export { buildForest, visibleIds, layout, childCount, pathTo, rollupHealth, type Forest, type Rollup } from "./tree.js";
 export { traceEdges, TRACE_COLORS } from "./trace.js";
-// Task 3: export { diffModels, type ModelDiff } from "./diff.js";
+export { diffModels, type ModelDiff } from "./diff.js";
