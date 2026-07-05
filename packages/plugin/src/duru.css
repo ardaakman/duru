@@ -1,0 +1,74 @@
+.duru-app { height: 100%; display: flex; flex-direction: column; background: #fafafa; color: #171717; font-family: Inter, system-ui, Arial, sans-serif; }
+.duru-app * { box-sizing: border-box; }
+.duru-bar { height: 46px; display: flex; align-items: center; gap: 12px; padding: 0 18px; background: #fff; border-bottom: 1px solid #ebebeb; font-size: 13px; z-index: 5; }
+.duru-mark { font-weight: 600; display: flex; align-items: center; gap: 8px; }
+.duru-d { width: 10px; height: 10px; border-radius: 50%; background: #171717; display: inline-block; }
+.duru-hint { color: #8f8f8f; font-size: 12px; }
+.duru-crumbs { display: flex; align-items: center; gap: 6px; font-size: 12.5px; }
+.duru-crumb { border: 1px solid #ebebeb; background: #fff; border-radius: 6px; padding: 3px 9px; cursor: pointer; font-size: 12px; color: #171717; }
+.duru-crumb:hover { border-color: #0070f3; color: #0070f3; }
+.duru-slash { color: #c4c4c4; }
+.duru-stage { position: relative; flex: 1; min-height: 0; }
+.react-flow__node { transition: transform .38s cubic-bezier(.22,.7,.24,1); }
+.duru-card { width: 212px; height: 52px; background: #fff; border: 1px solid #e7e7e7; border-radius: 11px; display: flex; align-items: center; padding: 0 10px 0 7px; gap: 9px; box-shadow: 0 1px 2px rgba(0,0,0,.05); cursor: pointer; transition: box-shadow .15s, border-color .15s; }
+.duru-card:hover { border-color: #d4d4d4; box-shadow: 0 3px 10px rgba(0,0,0,.08); }
+.duru-card.sel { border-color: #0070f3; box-shadow: 0 0 0 2px #0070f333; }
+.duru-badge { width: 32px; height: 32px; border-radius: 9px; flex: none; display: flex; align-items: center; justify-content: center; color: #fff; font: 700 8.5px ui-monospace, monospace; text-transform: uppercase; }
+.duru-txt { display: flex; flex-direction: column; line-height: 1.15; min-width: 0; flex: 1; }
+.duru-nm { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.duru-sub { font: 10px ui-monospace, monospace; color: #8f8f8f; margin-top: 1px; }
+.duru-dot { width: 9px; height: 9px; border-radius: 50%; flex: none; box-shadow: 0 0 0 3px rgba(0,0,0,.04); }
+.duru-chip { font: 10px ui-monospace, monospace; color: #4d4d4d; border: 1px solid #e7e7e7; background: #fafafa; border-radius: 20px; padding: 2px 8px; cursor: pointer; flex: none; }
+.duru-chip:hover { border-color: #0070f3; color: #0070f3; }
+.duru-hd { opacity: 0 !important; width: 1px !important; height: 1px !important; min-width: 0 !important; border: none !important; }
+.duru-legend { background: #fff; border: 1px solid #ebebeb; border-radius: 10px; padding: 10px 12px; font: 11px Inter, system-ui; box-shadow: 0 1px 3px rgba(0,0,0,.06); width: 176px; }
+.duru-legend-h { font: 10px ui-monospace, monospace; text-transform: uppercase; color: #8f8f8f; letter-spacing: .05em; margin-bottom: 7px; }
+.duru-legend-row { display: flex; align-items: center; gap: 7px; margin: 3px 0; color: #4d4d4d; }
+.duru-sw { width: 11px; height: 11px; border-radius: 4px; flex: none; }
+.duru-legend-sep { border-top: 1px solid #ebebeb; margin: 7px 0 6px; }
+.duru-mono { font: 10px ui-monospace, monospace; }
+.duru-inspector { position: absolute; top: 12px; right: 12px; width: 320px; max-height: calc(100% - 24px); overflow: auto; background: #fff; border: 1px solid #ebebeb; border-radius: 12px; box-shadow: 0 8px 30px rgba(0,0,0,.12); z-index: 10; }
+.duru-insp-head { display: flex; align-items: center; gap: 10px; padding: 12px; border-bottom: 1px solid #ebebeb; }
+.duru-insp-title { flex: 1; min-width: 0; }
+.duru-x { border: none; background: none; font-size: 18px; color: #8f8f8f; cursor: pointer; line-height: 1; }
+.duru-insp-body { padding: 12px; }
+.duru-insp-sec { margin-bottom: 12px; font-size: 12.5px; color: #4d4d4d; display: block; }
+.duru-eyebrow { font: 10px ui-monospace, monospace; text-transform: uppercase; color: #8f8f8f; letter-spacing: .05em; margin-bottom: 5px; }
+.duru-chips { display: flex; flex-wrap: wrap; gap: 5px; }
+.duru-relchip { font: 11px ui-monospace, monospace; border: 1px solid #ebebeb; background: #fafafa; border-radius: 6px; padding: 2px 7px; cursor: pointer; color: #171717; }
+.duru-relchip:hover { border-color: #0070f3; color: #0070f3; }
+.duru-src { font: 11px ui-monospace, monospace; color: #8f8f8f; word-break: break-all; }
+.duru-yaml { font: 11px ui-monospace, monospace; background: #fafafa; border: 1px solid #ebebeb; border-radius: 8px; padding: 8px; margin-top: 6px; white-space: pre-wrap; word-break: break-word; max-height: 260px; overflow: auto; }
+
+.duru-ring { box-shadow: 0 0 0 2px #c4c4c4; }
+.duru-dimmed { opacity: .15; }
+.duru-card { transition: box-shadow .15s, border-color .15s, opacity .2s; }
+
+.duru-searchwrap { position: relative; }
+.duru-search { width: 220px; border: 1px solid #ebebeb; border-radius: 8px; padding: 5px 10px; font: 12.5px Inter, system-ui; background: #fafafa; outline: none; }
+.duru-search:focus { border-color: #0070f3; background: #fff; }
+.duru-drop { position: absolute; top: 34px; left: 0; width: 300px; background: #fff; border: 1px solid #ebebeb; border-radius: 10px; box-shadow: 0 8px 30px rgba(0,0,0,.12); z-index: 30; overflow: hidden; }
+.duru-drop-row { display: block; width: 100%; text-align: left; border: none; background: #fff; padding: 7px 10px; font: 12.5px Inter, system-ui; cursor: pointer; color: #171717; }
+.duru-drop-row.on { background: #f5f5f5; }
+.duru-drop-kind { font: 10px ui-monospace, monospace; text-transform: uppercase; color: #8f8f8f; margin-right: 6px; }
+.duru-drop-ns { color: #8f8f8f; }
+.duru-crumbseg { display: inline-flex; align-items: center; gap: 6px; }
+
+.duru-legend-btn { display: flex; align-items: center; gap: 7px; margin: 3px 0; color: #4d4d4d; border: none; background: none; padding: 0; font: 11px Inter, system-ui; cursor: pointer; width: 100%; text-align: left; }
+.duru-legend-btn:hover { color: #171717; }
+.duru-legend-btn.off { opacity: .35; text-decoration: line-through; }
+.duru-edge-sw { width: 14px; height: 0; border-top: 2px dashed; flex: none; }
+
+.duru-tag { font: 10px ui-monospace, monospace; text-transform: uppercase; letter-spacing: .04em; color: #8f8f8f; border: 1px solid #ebebeb; border-radius: 6px; padding: 2px 7px; }
+.duru-warnwrap { position: relative; }
+.duru-warnchip { font: 11px ui-monospace, monospace; color: #9a6700; background: #fff8e5; border: 1px solid #f5d90a66; border-radius: 6px; padding: 2px 8px; cursor: pointer; }
+.duru-pop { position: absolute; top: 28px; left: 0; width: 340px; max-height: 240px; overflow: auto; background: #fff; border: 1px solid #ebebeb; border-radius: 10px; box-shadow: 0 8px 30px rgba(0,0,0,.12); z-index: 40; padding: 8px; }
+.duru-pop-row { font: 11px ui-monospace, monospace; color: #4d4d4d; padding: 3px 4px; word-break: break-all; }
+.duru-copy { float: right; font: 10px ui-monospace, monospace; border: 1px solid #ebebeb; background: #fff; border-radius: 5px; padding: 1px 7px; cursor: pointer; color: #4d4d4d; }
+.duru-copy:hover { border-color: #0070f3; color: #0070f3; }
+
+.duru-pill { font: 11px ui-monospace, monospace; color: #0a5c2e; background: #e9f7ef; border: 1px solid #2ea04355; border-radius: 20px; padding: 3px 10px; cursor: pointer; }
+.duru-pill:hover { border-color: #2ea043; }
+.duru-open { display: inline-block; font: 12px Inter, system-ui; color: #0070f3; text-decoration: none; border: 1px solid #ebebeb; border-radius: 6px; padding: 3px 9px; }
+.duru-open:hover { border-color: #0070f3; }
+.duru-load { display: flex; align-items: center; justify-content: center; height: 100%; color: #8f8f8f; font: 13px Inter, system-ui; }

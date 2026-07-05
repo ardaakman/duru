@@ -1,15 +1,16 @@
 {
   "name": "kubeviz",
   "version": "0.0.1",
-  "description": "Turn Kubernetes manifests into an interactive map (provisional name)",
+  "description": "Turn Kubernetes manifests into an interactive map — with duru, the live Headlamp plugin, as a workspace",
   "license": "Apache-2.0",
   "type": "module",
   "bin": { "kubeviz": "dist/cli.js" },
   "files": ["dist", "templates"],
+  "workspaces": ["packages/*"],
   "scripts": {
     "build:web": "node scripts/build-web.mjs",
-    "build": "npm run build:web && tsc",
-    "pretest": "npm run build:web",
+    "build": "npm run build:web && tsc && npm run build --workspace @duru/core && npm run build --workspace headlamp-plugin-duru",
+    "pretest": "npm run build:web && npm run build --workspace @duru/core",
     "test": "vitest run",
     "cli": "tsx src/cli.ts",
     "prepublishOnly": "npm run build"
