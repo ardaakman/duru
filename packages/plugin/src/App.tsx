@@ -120,6 +120,7 @@ export function App({ model, pending, onRefresh, structureRev, warnings, dark }:
       for (const e of model.edges) {
         if (e.type === "owns") continue;
         if (!idsSet.has(e.source) || !idsSet.has(e.target)) continue;
+        if (e.source !== focus && e.target !== focus) continue; // v1.1: direct connections only
         rfe.push({
           id: "focus:" + e.id, source: e.source, target: e.target, type: "smoothstep", animated: true, label: e.type,
           labelStyle: { font: "10px ui-monospace, monospace", fill: dark ? "#b8b8b8" : "#4d4d4d" }, labelBgStyle: { fill: dark ? "#111113" : "#fafafa" },
@@ -129,7 +130,7 @@ export function App({ model, pending, onRefresh, structureRev, warnings, dark }:
       }
     }
     return { rfn, rfe };
-  }, [forest, rollup, ids, positions, collapsed, dark, focusRes, idsSet, model]);
+  }, [forest, rollup, ids, positions, collapsed, dark, focus, focusRes, idsSet, model]);
   const nodes = useMemo(
     () => base.rfn.map((n) => {
       const dim = dimmed.has(familyOf(n.data.kind));
@@ -140,12 +141,12 @@ export function App({ model, pending, onRefresh, structureRev, warnings, dark }:
   const trace = useMemo(() => {
     if (focusRes) {
       const types = [...new Set(model.edges
-        .filter((e) => e.type !== "owns" && idsSet.has(e.source) && idsSet.has(e.target))
+        .filter((e) => e.type !== "owns" && (e.source === focus || e.target === focus) && idsSet.has(e.source) && idsSet.has(e.target))
         .map((e) => e.type))];
       return { edges: [], types };
     }
     return traceEdges(model, selected, idsSet);
-  }, [focusRes, model, selected, idsSet]);
+  }, [focus, focusRes, model, selected, idsSet]);
   const edges = useMemo(() => [
     ...base.rfe,
     ...trace.edges.map((e) => ({
