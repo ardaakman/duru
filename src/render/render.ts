@@ -18,7 +18,7 @@ export function render(model: GraphModel, opts: { title?: string } = {}): string
   let html = read("shell.html");
   html = put(html, "/*STYLES*/", read("styles.css"));
   html = put(html, "/*ENGINE*/", read("engine.bundle.js"));
-  html = put(html, "<title>kubeviz — Kubernetes map</title>", "<title>" + escHtml(opts.title || "kubeviz — Kubernetes map") + "</title>");
+  html = put(html, "<title>duru — Kubernetes map</title>", "<title>" + escHtml(opts.title || "duru — Kubernetes map") + "</title>");
   // MODEL is (potentially untrusted) content — inject LAST so no later put() can scan/corrupt it.
   html = put(html, "/*MODEL*/", jsonForScript(model));
   return html;

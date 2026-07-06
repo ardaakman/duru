@@ -27,7 +27,7 @@ export function TopBar({ items, crumbs, onCrumb, onAll, onPick, hint, warnings, 
   const pick = (id: string) => { setQ(""); onPick(id); };
   return (
     <header className="kv-bar">
-      <div className="kv-mark"><span className="kv-d" />kubeviz</div>
+      <div className="kv-mark"><span className="kv-d" />duru</div>
       {manifestMode ? <span className="kv-tag">manifest view · live state unknown</span> : null}
       {warnings.length ? (
         <span className="kv-warnwrap">

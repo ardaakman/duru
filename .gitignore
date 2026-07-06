@@ -4,3 +4,4 @@ packages/plugin/src/styles.ts
 *.tgz
 .superpowers/
 .eslintcache
+/map.html

@@ -12,7 +12,7 @@ test("render produces one self-contained HTML doc containing the model and bundl
   const html = render(model, { title: "t" });
   expect(html.startsWith("<!DOCTYPE html>")).toBe(true);
   expect(html).toContain('id="root"');
-  expect(html).toContain('id="kubeviz-model"');
+  expect(html).toContain('id="duru-model"');
   expect(html).toContain("ns/apps/Deployment/web");   // model injected
   expect(html).toContain("controllers");               // bundle inlined (Legend family label survives minify)
   expect(html).not.toContain("/*MODEL*/");            // token replaced

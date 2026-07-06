@@ -20,5 +20,5 @@ The plugin bundle includes:
 Design language: the Geist color palette only. No font files are bundled
 (system font stack), so no font license applies.
 
-Pipeline design originally developed in kubeviz (https://github.com/ardaakman/ami-kube,
+Pipeline design shared by the duru CLI and plugin in this repository (Apache-2.0,
 Apache-2.0, same author), itself inspired by KubeDiagrams (Apache-2.0).

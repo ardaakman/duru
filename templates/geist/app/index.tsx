@@ -7,7 +7,7 @@ const style = document.createElement("style");
 style.textContent = rfCss as unknown as string;
 document.head.appendChild(style);
 
-const raw = document.getElementById("kubeviz-model")?.textContent || "{}";
+const raw = document.getElementById("duru-model")?.textContent || "{}";
 const model = JSON.parse(raw) as GraphModel;
 
 createRoot(document.getElementById("root")!).render(<App model={model} />);

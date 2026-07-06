@@ -24,17 +24,17 @@ export function chooseFormat(a: { out?: string; format?: "html" | "json" }): "ht
 
 async function main() {
   const args = parseArgs(process.argv.slice(2));
-  if (!args.path) { console.error("usage: kubeviz <path> [--output|-o <out.html|out.json>] [--html|--json] [--slim]"); process.exit(2); }
+  if (!args.path) { console.error("usage: duru <path> [--output|-o <out.html|out.json>] [--html|--json] [--slim]"); process.exit(2); }
   const model = await run(args.path);
   if (args.slim) for (const n of model.nodes) delete n.manifest; // §5: opt-out of embedded manifests
   const fmt = chooseFormat(args);
-  const output = fmt === "html" ? render(model, { title: "kubeviz — " + args.path }) : JSON.stringify(model, null, 2);
+  const output = fmt === "html" ? render(model, { title: "duru — " + args.path }) : JSON.stringify(model, null, 2);
   if (fmt === "html" && !args.slim && output.length > 5 * 1024 * 1024)
-    console.error("kubeviz: output is " + (output.length / 1024 / 1024).toFixed(1) + " MB — consider --slim to omit embedded manifests");
+    console.error("duru: output is " + (output.length / 1024 / 1024).toFixed(1) + " MB — consider --slim to omit embedded manifests");
   if (args.out) await writeFile(args.out, output); else process.stdout.write(output + "\n");
-  console.error("kubeviz: " + model.nodes.length + " nodes, " + model.edges.length + " edges, " + model.warnings.length + " warnings" + (args.out ? " -> " + args.out + " (" + fmt + ")" : ""));
+  console.error("duru: " + model.nodes.length + " nodes, " + model.edges.length + " edges, " + model.warnings.length + " warnings" + (args.out ? " -> " + args.out + " (" + fmt + ")" : ""));
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  main().catch((e) => { console.error("kubeviz: " + e.message); process.exit(1); });
+  main().catch((e) => { console.error("duru: " + e.message); process.exit(1); });
 }
