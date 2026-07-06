@@ -1,6 +1,6 @@
 import type { GraphModel } from "@duru/core";
 import { buildForest, childCount, focusSet, layout, pathTo, rollupHealth, TRACE_COLORS, traceEdges, visibleIds } from "@duru/core";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import ReactFlow, { Background, Controls, MarkerType, Panel, useReactFlow } from "reactflow";
 import { CardNode } from "./CardNode";
 import { Inspector } from "./Inspector";
@@ -99,6 +99,18 @@ export function App({ model, pending, onRefresh, structureRev, warnings, dark }:
   }
   const positions = posRef.current.pos;
 
+  // Manual drag layer: user-moved positions override dagre until the next
+  // re-layout (posKey change: collapse/drill/focus/refresh). Health patches
+  // keep posKey stable, so drags survive live updates.
+  const dragRef = useRef<{ key: string; map: Map<string, { x: number; y: number }> }>({ key: "", map: new Map() });
+  if (dragRef.current.key !== posKey) dragRef.current = { key: posKey, map: new Map() };
+  const [dragTick, setDragTick] = useState(0);
+  const onNodesChange = useCallback((changes: any[]) => {
+    let moved = false;
+    for (const c of changes) if (c.type === "position" && c.position) { dragRef.current.map.set(c.id, c.position); moved = true; }
+    if (moved) setDragTick((t) => t + 1);
+  }, []);
+
   const base = useMemo(() => {
     const rfn = ids.map((id) => {
       const n = forest.byId.get(id)!;
@@ -135,9 +147,12 @@ export function App({ model, pending, onRefresh, structureRev, warnings, dark }:
     () => base.rfn.map((n) => {
       const dim = dimmed.has(familyOf(n.data.kind));
       const sel = n.id === selected;
-      return dim || sel ? { ...n, data: { ...n.data, selected: sel, dimmed: dim } } : n;
+      const drag = dragRef.current.map.get(n.id);
+      if (!dim && !sel && !drag) return n;
+      return { ...n, ...(drag ? { position: drag } : null), data: { ...n.data, selected: sel, dimmed: dim } };
     }),
-    [base, selected, dimmed]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [base, selected, dimmed, dragTick]);
   const trace = useMemo(() => {
     if (focusRes) {
       const types = [...new Set(model.edges
@@ -172,6 +187,7 @@ export function App({ model, pending, onRefresh, structureRev, warnings, dark }:
       <div className="duru-stage">
         <ReactFlow
           nodes={nodes} edges={edges} nodeTypes={nodeTypes} fitView minZoom={0.2} onlyRenderVisibleElements
+          onNodesChange={onNodesChange}
           onNodeClick={(_, n) => { if (n.id.startsWith("more:")) return; setSelected(n.id); }}
           onNodeDoubleClick={(_, n) => { if (n.id.startsWith("more:")) return; childCount(forest, n.id) > 0 ? drill(n.id) : enterFocus(n.id); }}
           onPaneClick={() => setSelected(null)}
