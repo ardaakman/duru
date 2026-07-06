@@ -8,3 +8,4 @@ export { KIND_META, CRD_TIER_HINTS, kindMeta, CLUSTER_SCOPED, groupOf } from "./
 export { buildForest, visibleIds, layout, childCount, pathTo, rollupHealth, type Forest, type Rollup } from "./tree.js";
 export { traceEdges, TRACE_COLORS } from "./trace.js";
 export { diffModels, type ModelDiff } from "./diff.js";
+export { focusSet, type FocusResult, type FocusMore, type FocusOpts } from "./focus.js";
