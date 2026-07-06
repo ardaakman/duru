@@ -50,7 +50,7 @@ export function App({ model, pending, onRefresh, structureRev, warnings, dark }:
   const drill = (id: string) => { setFocus(null); if (childCount(forest, id) > 0) { setCollapsed((s) => { const x = new Set(s); x.delete(id); return x; }); setRoot(id); } };
   const [focus, setFocus] = useState<string | null>(null);
   const focusRef = useRef<string | null>(null); focusRef.current = focus;
-  const enterFocus = (id: string) => { setRoot(null); setFocus(id); setSelected(id); setFocusSignal((f) => ({ id, n: f.n + 1 })); };
+  const enterFocus = (id: string) => { setLocalWarn(null); setRoot(null); setFocus(id); setSelected(id); setFocusSignal((f) => ({ id, n: f.n + 1 })); };
   const exitFocus = () => setFocus(null);
   const reveal = (id: string) => {
     setFocus(null);
@@ -150,11 +150,11 @@ export function App({ model, pending, onRefresh, structureRev, warnings, dark }:
     ...base.rfe,
     ...trace.edges.map((e) => ({
       id: "trace:" + e.id, source: e.source, target: e.target, type: "smoothstep", animated: true, label: e.type,
-      labelStyle: { font: "10px ui-monospace, monospace", fill: "#4d4d4d" }, labelBgStyle: { fill: "#fafafa" },
+      labelStyle: { font: "10px ui-monospace, monospace", fill: dark ? "#b8b8b8" : "#4d4d4d" }, labelBgStyle: { fill: dark ? "#111113" : "#fafafa" },
       style: { stroke: TRACE_COLORS[e.type] ?? "#8f8f8f", strokeWidth: 1.6, strokeDasharray: "5 4" },
       markerEnd: { type: MarkerType.ArrowClosed, color: TRACE_COLORS[e.type] ?? "#8f8f8f", width: 14, height: 14 },
     })),
-  ], [base, trace]);
+  ], [base, trace, dark]);
 
   const crumbs = (root ? pathTo(forest, root) : []).map((c) => ({ id: c, name: forest.byId.get(c)?.name ?? c }));
   const items = useMemo(
