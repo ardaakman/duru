@@ -2,10 +2,11 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 type Item = { id: string; name: string; kind: string; ns: string };
 
-export function TopBar({ items, crumbs, onCrumb, onAll, onPick, hint, warnings, pending, onRefresh }: {
+export function TopBar({ items, crumbs, onCrumb, onAll, onPick, hint, warnings, pending, onRefresh, focusName, truncated, onExitFocus }: {
   items: Item[]; crumbs: { id: string; name: string }[];
   onCrumb: (id: string) => void; onAll: () => void; onPick: (id: string) => void; hint: string;
   warnings: string[]; pending: number; onRefresh: () => void;
+  focusName?: string | null; truncated?: boolean; onExitFocus?: () => void;
 }) {
   const [q, setQ] = useState("");
   const [active, setActive] = useState(0);
@@ -57,7 +58,14 @@ export function TopBar({ items, crumbs, onCrumb, onAll, onPick, hint, warnings, 
           </div>
         ) : null}
       </div>
-      {crumbs.length ? (
+      {focusName ? (
+        <div className="duru-crumbs">
+          <button className="duru-crumb" onClick={onExitFocus}>all</button>
+          <span className="duru-slash">/</span>
+          <span className="duru-crumb" style={{ cursor: "default" }}>⌖ {focusName}</span>
+          {truncated ? <span className="duru-focuschip" title="Neighborhood capped — see +N more cards">⚠ truncated</span> : null}
+        </div>
+      ) : crumbs.length ? (
         <div className="duru-crumbs">
           <button className="duru-crumb" onClick={onAll}>all</button>
           {crumbs.map((c) => (

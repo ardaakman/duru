@@ -109,3 +109,9 @@
 .duru-dark .react-flow__controls-button { background: #1b1b1e; border-bottom: 1px solid #2a2a2e; fill: #ededed; }
 .duru-dark .react-flow__controls-button:hover { background: #26262a; }
 .duru-dark .react-flow__attribution { background: transparent; color: #8f8f8f; }
+
+.duru-card.duru-more { border-style: dashed; background: transparent; cursor: default; }
+.duru-card.duru-more .duru-nm { color: #8f8f8f; font-weight: 400; }
+.duru-dark .duru-card.duru-more { background: transparent; }
+.duru-focuschip { font: 11px ui-monospace, monospace; color: #9a6700; background: #fff8e5; border: 1px solid #f5d90a66; border-radius: 6px; padding: 2px 8px; }
+.duru-dark .duru-focuschip { background: #2a2208; border-color: #f5d90a44; color: #e3b341; }

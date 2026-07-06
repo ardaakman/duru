@@ -5,8 +5,8 @@ import { detailsUrl } from "./links";
 const OUT: Record<string, string> = { selects: "selects →", routes: "routes →", mounts: "mounts →", class: "class →", uses: "uses →" };
 const IN: Record<string, string> = { selects: "← selected by", routes: "← routed by", mounts: "← mounted by", class: "← class of", uses: "← used by" };
 
-export function Inspector({ model, byId, id, onClose, onSelect }:
-  { model: GraphModel; byId: Map<string, Node>; id: string; onClose: () => void; onSelect: (id: string) => void }) {
+export function Inspector({ model, byId, id, onClose, onSelect, onFocus }:
+  { model: GraphModel; byId: Map<string, Node>; id: string; onClose: () => void; onSelect: (id: string) => void; onFocus: (id: string) => void }) {
   const n = byId.get(id);
   if (!n) return null;
   const b = badge(n.kind);
@@ -25,6 +25,7 @@ export function Inspector({ model, byId, id, onClose, onSelect }:
       <div className="duru-insp-head">
         <div className="duru-badge" style={{ background: b.color }}>{b.abbr}</div>
         <div className="duru-insp-title"><div className="duru-nm">{n.name}</div><div className="duru-sub">{n.kind}{n.ns ? " · " + n.ns : ""}</div></div>
+        <button className="duru-relchip" title="Focus: show this node's full neighborhood" onClick={() => onFocus(id)}>⌖ focus</button>
         <button className="duru-x" onClick={onClose} aria-label="Close">×</button>
       </div>
       <div className="duru-insp-body">

@@ -2,6 +2,15 @@ import { Handle, Position } from "reactflow";
 import { badge, HEALTH } from "./kinds";
 
 export function CardNode({ data }: { data: any }) {
+  if (data.more) {
+    return (
+      <div className="duru-card duru-more">
+        <Handle type="target" position={Position.Left} className="duru-hd" />
+        <div className="duru-txt"><div className="duru-nm">{data.name}</div></div>
+        <Handle type="source" position={Position.Right} className="duru-hd" />
+      </div>
+    );
+  }
   const b = badge(data.kind);
   // §1.3: own health when expanded; subtree-worst when collapsed (surface what you hide).
   const shown = data.childCount > 0 && data.collapsed ? data.rollupWorst : data.health;
