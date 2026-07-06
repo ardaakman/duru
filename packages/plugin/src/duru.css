@@ -72,3 +72,40 @@
 .duru-open { display: inline-block; font: 12px Inter, system-ui; color: #0070f3; text-decoration: none; border: 1px solid #ebebeb; border-radius: 6px; padding: 3px 9px; }
 .duru-open:hover { border-color: #0070f3; }
 .duru-load { display: flex; align-items: center; justify-content: center; height: 100%; color: #8f8f8f; font: 13px Inter, system-ui; }
+
+/* ---- dark mode (Headlamp theme) ---- */
+.duru-app.duru-dark { background: #111113; color: #ededed; }
+.duru-dark .duru-bar { background: #161618; border-color: #2a2a2e; }
+.duru-dark .duru-d { background: #ededed; }
+.duru-dark .duru-hint, .duru-dark .duru-sub, .duru-dark .duru-drop-ns { color: #8f8f8f; }
+.duru-dark .duru-card { background: #1b1b1e; border-color: #2a2a2e; box-shadow: 0 1px 2px rgba(0,0,0,.4); }
+.duru-dark .duru-card:hover { border-color: #3a3a3f; }
+.duru-dark .duru-card.sel { border-color: #3694ff; box-shadow: 0 0 0 2px #3694ff33; }
+.duru-dark .duru-nm { color: #ededed; }
+.duru-dark .duru-chip { background: #111113; border-color: #2a2a2e; color: #b8b8b8; }
+.duru-dark .duru-chip:hover { border-color: #3694ff; color: #3694ff; }
+.duru-dark .duru-search { background: #161618; border-color: #2a2a2e; color: #ededed; }
+.duru-dark .duru-search:focus { border-color: #3694ff; background: #1b1b1e; }
+.duru-dark .duru-drop, .duru-dark .duru-pop, .duru-dark .duru-inspector, .duru-dark .duru-legend { background: #1b1b1e; border-color: #2a2a2e; box-shadow: 0 8px 30px rgba(0,0,0,.5); }
+.duru-dark .duru-drop-row { background: #1b1b1e; color: #ededed; }
+.duru-dark .duru-drop-row.on { background: #26262a; }
+.duru-dark .duru-crumb { background: #1b1b1e; border-color: #2a2a2e; color: #ededed; }
+.duru-dark .duru-insp-head { border-color: #2a2a2e; }
+.duru-dark .duru-insp-sec, .duru-dark .duru-legend-row, .duru-dark .duru-legend-btn { color: #b8b8b8; }
+.duru-dark .duru-legend-btn:hover { color: #ededed; }
+.duru-dark .duru-legend-sep { border-color: #2a2a2e; }
+.duru-dark .duru-relchip { background: #111113; border-color: #2a2a2e; color: #ededed; }
+.duru-dark .duru-relchip:hover { border-color: #3694ff; color: #3694ff; }
+.duru-dark .duru-open { border-color: #2a2a2e; color: #3694ff; }
+.duru-dark .duru-src { color: #8f8f8f; }
+.duru-dark .duru-pill { background: #10241a; border-color: #2ea04366; color: #4ade80; }
+.duru-dark .duru-warnchip { background: #2a2208; border-color: #f5d90a44; color: #e3b341; }
+.duru-dark .duru-pop-row { color: #b8b8b8; }
+.duru-dark .duru-x { color: #8f8f8f; }
+.duru-dark .duru-load { color: #8f8f8f; }
+.duru-dark .duru-yaml { background: #111113; border-color: #2a2a2e; color: #b8b8b8; }
+.duru-dark .duru-copy { background: #1b1b1e; border-color: #2a2a2e; color: #b8b8b8; }
+.duru-dark .react-flow__controls { background: #1b1b1e; border: 1px solid #2a2a2e; }
+.duru-dark .react-flow__controls-button { background: #1b1b1e; border-bottom: 1px solid #2a2a2e; fill: #ededed; }
+.duru-dark .react-flow__controls-button:hover { background: #26262a; }
+.duru-dark .react-flow__attribution { background: transparent; color: #8f8f8f; }

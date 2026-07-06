@@ -6,11 +6,10 @@ import { CardNode } from "./CardNode";
 import { Inspector } from "./Inspector";
 import { familyOf } from "./kinds";
 import { Legend } from "./Legend";
+import { bgDots, edgeStroke } from "./theme";
 import { TopBar } from "./TopBar";
 
 const nodeTypes = { card: CardNode };
-const EDGE_STYLE = { stroke: "#cfcfcf", strokeWidth: 1.4 };
-const MARKER = { type: MarkerType.ArrowClosed, color: "#cfcfcf", width: 16, height: 16 };
 
 function FitOnChange({ rootSignal, focus }: { rootSignal: string; focus: { id: string | null; n: number } }) {
   const rf = useReactFlow();
@@ -26,9 +25,11 @@ function FitOnChange({ rootSignal, focus }: { rootSignal: string; focus: { id: s
   return null;
 }
 
-export function App({ model, pending, onRefresh, structureRev, warnings }: {
-  model: GraphModel; pending: number; onRefresh: () => void; structureRev: number; warnings: string[];
+export function App({ model, pending, onRefresh, structureRev, warnings, dark }: {
+  model: GraphModel; pending: number; onRefresh: () => void; structureRev: number; warnings: string[]; dark: boolean;
 }) {
+  const edgeStyle = { stroke: edgeStroke(dark), strokeWidth: 1.4 };
+  const marker = { type: MarkerType.ArrowClosed, color: edgeStroke(dark), width: 16, height: 16 };
   const forest = useMemo(() => buildForest(model), [model]);
   const rollup = useMemo(() => rollupHealth(forest), [forest]);   // recomputes on health patches — cheap, no layout
   const [collapsed, setCollapsed] = useState<Set<string>>(() => {
@@ -80,9 +81,9 @@ export function App({ model, pending, onRefresh, structureRev, warnings }: {
     });
     const vis = new Set(ids);
     const rfe = forest.ownEdges.filter((e) => vis.has(e.source) && vis.has(e.target))
-      .map((e) => ({ id: e.id, source: e.source, target: e.target, type: "smoothstep", style: EDGE_STYLE, markerEnd: MARKER }));
+      .map((e) => ({ id: e.id, source: e.source, target: e.target, type: "smoothstep", style: edgeStyle, markerEnd: marker }));
     return { rfn, rfe };
-  }, [forest, rollup, ids, positions, collapsed]);
+  }, [forest, rollup, ids, positions, collapsed, dark]);
   const nodes = useMemo(
     () => base.rfn.map((n) => {
       const dim = dimmed.has(familyOf(n.data.kind));
@@ -110,7 +111,7 @@ export function App({ model, pending, onRefresh, structureRev, warnings }: {
     [forest]);
 
   return (
-    <div className="duru-app">
+    <div className={"duru-app" + (dark ? " duru-dark" : "")}>
       <TopBar items={items} crumbs={crumbs} onAll={() => setRoot(null)}
         onCrumb={(id) => setRoot(id)} onPick={reveal}
         hint="double-click a node to drill in · click ▸ to collapse · / to search"
@@ -122,7 +123,7 @@ export function App({ model, pending, onRefresh, structureRev, warnings }: {
           onNodeDoubleClick={(_, n) => drill(n.id)}
           onPaneClick={() => setSelected(null)}
         >
-          <Background color="#e6e6e6" gap={22} />
+          <Background color={bgDots(dark)} gap={22} />
           <Controls showInteractive={false} />
           <Panel position="bottom-right"><Legend activeTraceTypes={trace.types} dimmed={dimmed} onToggleFamily={toggleFamily} /></Panel>
           <FitOnChange rootSignal={(root ?? "__all__") + ":" + structureRev} focus={focus} />
