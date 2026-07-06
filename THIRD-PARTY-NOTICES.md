@@ -14,7 +14,7 @@ The plugin bundle includes:
 - **dagre** (MIT) — https://github.com/dagrejs/dagre
 
 `@duru/core` runtime dependencies:
-- **dagre** (MIT) — tree layout
+- **@dagrejs/dagre** (MIT) — tree layout (maintained dagre fork)
 - **yaml** (ISC) — https://github.com/eemeli/yaml
 
 Design language: the Geist color palette only. No font files are bundled

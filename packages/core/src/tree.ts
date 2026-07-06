@@ -1,4 +1,4 @@
-import dagre from "dagre";
+import * as dagre from "@dagrejs/dagre";
 import type { GraphModel, Node, Edge } from "./types.js";
 import { healthCapable } from "./health.js";
 import type { Health } from "./types.js";

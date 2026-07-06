@@ -5,12 +5,12 @@
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "scripts": { "build": "tsc" },
-  "dependencies": {
-    "dagre": "^0.8.5",
-    "yaml": "^2.5.0"
+  "scripts": {
+    "build": "tsc"
   },
-  "devDependencies": {
-    "@types/dagre": "^0.7.52"
-  }
+  "dependencies": {
+    "yaml": "^2.5.0",
+    "@dagrejs/dagre": "^1.1.4"
+  },
+  "devDependencies": {}
 }
