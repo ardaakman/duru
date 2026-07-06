@@ -14,7 +14,9 @@ Two ways to use it, one codebase:
   interactive HTML file. Works offline; attach it to a PR or an incident doc.
 - [Headlamp](https://headlamp.dev) plugin — the same map, live: real-time
   health, a `↻` pill that gates re-layout so the map never shifts under you,
-  focus mode for any node's direct neighborhood, draggable nodes, dark mode.
+  focus mode for any node's direct neighborhood, draggable nodes, dark mode,
+  search with alias/label matching, a namespace/kind/`problems only` Filter,
+  and a `CRs` toggle to bring in the cluster's custom resources.
 
 ## CLI
 

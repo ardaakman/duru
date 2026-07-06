@@ -115,3 +115,26 @@
 .duru-dark .duru-card.duru-more { background: transparent; }
 .duru-focuschip { font: 11px ui-monospace, monospace; color: #9a6700; background: #fff8e5; border: 1px solid #f5d90a66; border-radius: 6px; padding: 2px 8px; }
 .duru-dark .duru-focuschip { background: #2a2208; border-color: #f5d90a44; color: #e3b341; }
+
+.duru-bars { display: flex; flex-direction: column; }
+.duru-drop-why { font: 10px ui-monospace, monospace; color: #8f8f8f; margin-left: 6px; }
+.duru-toolbtn { font: 12px Inter, system-ui; border: 1px solid #ebebeb; background: #fff; border-radius: 8px; padding: 4px 10px; cursor: pointer; color: #4d4d4d; }
+.duru-toolbtn.on { border-color: #0070f3; color: #0070f3; }
+.duru-filterwrap { position: relative; }
+.duru-filterpop { width: 260px; max-height: 340px; overflow: auto; padding: 10px 12px; }
+.duru-check { display: flex; align-items: center; gap: 7px; font: 12px Inter, system-ui; color: #4d4d4d; padding: 2px 0; cursor: pointer; }
+.duru-count { color: #a1a1a1; font: 10px ui-monospace, monospace; margin-left: auto; }
+.duru-chipbar { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; padding: 5px 18px; background: #fff; border-bottom: 1px solid #ebebeb; }
+.duru-fchip { display: inline-flex; align-items: center; gap: 4px; font: 11px ui-monospace, monospace; background: #f2f7ff; border: 1px solid #0070f333; color: #0070f3; border-radius: 20px; padding: 2px 4px 2px 9px; }
+.duru-fchip.off { opacity: .45; }
+.duru-fchip-x { border: none; background: none; color: inherit; cursor: pointer; font-size: 12px; line-height: 1; }
+.duru-clearall { border: none; background: none; color: #8f8f8f; font: 11px Inter, system-ui; cursor: pointer; text-decoration: underline; }
+.duru-empty { position: absolute; inset: 0; z-index: 5; display: flex; gap: 10px; align-items: center; justify-content: center; color: #8f8f8f; font: 13px Inter, system-ui; pointer-events: auto; }
+.duru-dark .duru-toolbtn { background: #1b1b1e; border-color: #2a2a2e; color: #b8b8b8; }
+.duru-dark .duru-toolbtn.on { border-color: #3694ff; color: #3694ff; }
+.duru-dark .duru-filterpop { background: #1b1b1e; }
+.duru-dark .duru-check { color: #b8b8b8; }
+.duru-dark .duru-chipbar { background: #161618; border-color: #2a2a2e; }
+.duru-dark .duru-fchip { background: #10233d; border-color: #3694ff44; color: #3694ff; }
+.duru-dark .duru-drop-why { color: #8f8f8f; }
+.duru-dark .duru-empty { color: #8f8f8f; }

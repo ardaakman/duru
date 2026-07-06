@@ -1,5 +1,5 @@
-import type { GraphModel } from "@duru/core";
-import { buildForest, childCount, focusSet, layout, pathTo, rollupHealth, TRACE_COLORS, traceEdges, visibleIds } from "@duru/core";
+import type { Filters, GraphModel } from "@duru/core";
+import { applyFilters, buildForest, childCount, emptyFilters, filtersActive, focusSet, layout, pathTo, rollupHealth, TRACE_COLORS, traceEdges, visibleIds } from "@duru/core";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import ReactFlow, { Background, Controls, MarkerType, Panel, useReactFlow } from "reactflow";
 import { CardNode } from "./CardNode";
@@ -25,8 +25,9 @@ function FitOnChange({ rootSignal, focusSignal }: { rootSignal: string; focusSig
   return null;
 }
 
-export function App({ model, pending, onRefresh, structureRev, warnings, dark }: {
+export function App({ model, pending, onRefresh, structureRev, warnings, dark, crs, onCrs, crLoading }: {
   model: GraphModel; pending: number; onRefresh: () => void; structureRev: number; warnings: string[]; dark: boolean;
+  crs: boolean; onCrs: (v: boolean) => void; crLoading: boolean;
 }) {
   const edgeStyle = { stroke: edgeStroke(dark), strokeWidth: 1.4 };
   const marker = { type: MarkerType.ArrowClosed, color: edgeStroke(dark), width: 16, height: 16 };
@@ -45,6 +46,7 @@ export function App({ model, pending, onRefresh, structureRev, warnings, dark }:
   const [selected, setSelected] = useState<string | null>(null);
   const [focusSignal, setFocusSignal] = useState<{ id: string | null; n: number }>({ id: null, n: 0 });
   const [dimmed, setDimmed] = useState<Set<string>>(new Set());
+  const [filters, setFilters] = useState<Filters>(emptyFilters());
   const toggle = (id: string) => setCollapsed((s) => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; });
   const toggleFamily = (f: string) => setDimmed((s) => { const n = new Set(s); n.has(f) ? n.delete(f) : n.add(f); return n; });
   const drill = (id: string) => { setFocus(null); if (childCount(forest, id) > 0) { setCollapsed((s) => { const x = new Set(s); x.delete(id); return x; }); setRoot(id); } };
@@ -54,6 +56,8 @@ export function App({ model, pending, onRefresh, structureRev, warnings, dark }:
   const exitFocus = () => setFocus(null);
   const reveal = (id: string) => {
     setFocus(null);
+    // Target hidden by active filters → clear them (mirrors clearing focus); kept when it already passes.
+    if (filtersActive(filters) && !applyFilters(forest, rollup, [id], filters).length) setFilters(emptyFilters());
     const chain = pathTo(forest, id);
     setCollapsed((s) => { const n = new Set(s); for (const a of chain) n.delete(a); return n; });
     setRoot((r) => (r && chain.includes(r) ? r : null));
@@ -74,15 +78,24 @@ export function App({ model, pending, onRefresh, structureRev, warnings, dark }:
     if (focus && !forest.byId.has(focus)) { setFocus(null); setLocalWarn("focused node no longer exists"); }
   }, [focus, forest]);
 
-  const ids = useMemo(
-    () => (focusRes ? focusRes.ids : visibleIds(forest, collapsed, root)),
-    [focusRes, forest, collapsed, root]);
+  const ids = useMemo(() => {
+    if (focusRes) return focusRes.ids;
+    const vis = visibleIds(forest, collapsed, root);
+    return applyFilters(forest, rollup, vis, filters);
+  }, [focusRes, forest, rollup, collapsed, root, filters]);
   const idsSet = useMemo(() => new Set(ids), [ids]);
+  // Filters are suspended in focus mode (focus is already a scope); folding the key in
+  // there would reset drag overrides on a no-op view. Joins posKey + the fit signal below.
+  const filterKey = !focusRes && filtersActive(filters)
+    ? [...filters.namespaces].sort().join(",") + ";" + [...filters.kinds].sort().join(",") + ";" + filters.problemsOnly
+    : "";
   // POSITION CACHE (spec: dagre must not run on health-only updates). Key = visible
   // structure (ids + parents); health patches rebuild `forest` but leave the key equal.
+  // Exception: with problemsOnly active a genuine health flip changes filtered membership
+  // → ids → posKey → re-layout + drag reset (intended; an appearing node needs layout).
   const posKey = useMemo(
-    () => (focusRes ? "F:" + focus + ":" : "") + ids.map((i) => i + ":" + (forest.byId.get(i)?.parentId ?? "")).join("|"),
-    [focusRes, focus, ids, forest]);
+    () => (focusRes ? "F:" + focus + ":" : "") + filterKey + "|" + ids.map((i) => i + ":" + (forest.byId.get(i)?.parentId ?? "")).join("|"),
+    [focusRes, focus, filterKey, ids, forest]);
   const posRef = useRef<{ key: string; pos: Map<string, { x: number; y: number }> } | null>(null);
   if (!posRef.current || posRef.current.key !== posKey) {
     const pos = layout(forest, ids);
@@ -173,17 +186,29 @@ export function App({ model, pending, onRefresh, structureRev, warnings, dark }:
   ], [base, trace, dark]);
 
   const crumbs = (root ? pathTo(forest, root) : []).map((c) => ({ id: c, name: forest.byId.get(c)?.name ?? c }));
-  const items = useMemo(
-    () => [...forest.byId.values()].map((n) => ({ id: n.id, name: n.name, kind: n.kind, ns: n.ns })),
-    [forest]);
+  // MEMOIZED: an inline array would recompute matchNodes on every render, drags included.
+  const searchNodes = useMemo(() => [...forest.byId.values()], [forest]);
+  // Counts over model.nodes (not forest.byId, which contains synthetic Namespace group roots).
+  const filterMeta = useMemo(() => {
+    const ns = new Map<string, number>();
+    const kinds = new Map<string, number>();
+    for (const n of model.nodes) {
+      ns.set(n.group, (ns.get(n.group) ?? 0) + 1);
+      kinds.set(n.kind, (kinds.get(n.kind) ?? 0) + 1);
+    }
+    const desc = (m: Map<string, number>) => [...m.entries()].sort((a, b) => b[1] - a[1]);
+    return { namespaces: desc(ns), kinds: desc(kinds) };
+  }, [model]);
 
   return (
     <div className={"duru-app" + (dark ? " duru-dark" : "")}>
-      <TopBar items={items} crumbs={crumbs} onAll={() => setRoot(null)}
+      <TopBar searchNodes={searchNodes} crumbs={crumbs} onAll={() => setRoot(null)}
         onCrumb={(id) => setRoot(id)} onPick={reveal}
         hint="double-click a node to drill in · click ▸ to collapse · / to search"
         warnings={localWarn ? [...warnings, localWarn] : warnings} pending={pending} onRefresh={onRefresh}
-        focusName={focus ? forest.byId.get(focus)?.name ?? null : null} truncated={focusRes?.truncated ?? false} onExitFocus={exitFocus} />
+        focusName={focus ? forest.byId.get(focus)?.name ?? null : null} truncated={focusRes?.truncated ?? false} onExitFocus={exitFocus}
+        filters={filters} onFilters={setFilters} filterMeta={filterMeta} filtersSuspended={!!focus}
+        crs={crs} onCrs={onCrs} crLoading={crLoading} />
       <div className="duru-stage">
         <ReactFlow
           nodes={nodes} edges={edges} nodeTypes={nodeTypes} fitView minZoom={0.2} onlyRenderVisibleElements
@@ -195,9 +220,14 @@ export function App({ model, pending, onRefresh, structureRev, warnings, dark }:
           <Background color={bgDots(dark)} gap={22} />
           <Controls showInteractive={false} />
           <Panel position="bottom-right"><Legend activeTraceTypes={trace.types} dimmed={dimmed} onToggleFamily={toggleFamily} /></Panel>
-          <FitOnChange rootSignal={(root ?? "__all__") + ":" + (focus ?? "-") + ":" + structureRev} focusSignal={focusSignal} />
+          <FitOnChange rootSignal={(root ?? "__all__") + ":" + (focus ?? "-") + ":" + structureRev + ":" + filterKey} focusSignal={focusSignal} />
         </ReactFlow>
         {selected ? <Inspector model={model} byId={forest.byId} id={selected} onClose={() => setSelected(null)} onSelect={reveal} onFocus={enterFocus} /> : null}
+        {(!focusRes && filtersActive(filters) && nodes.length === 0) ? (
+          <div className="duru-empty">no matches — adjust filters
+            <button className="duru-crumb" onClick={() => setFilters(emptyFilters())}>clear filters</button>
+          </div>
+        ) : null}
       </div>
     </div>
   );
