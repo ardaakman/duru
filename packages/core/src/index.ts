@@ -10,3 +10,4 @@ export { traceEdges, TRACE_COLORS } from "./trace.js";
 export { diffModels, type ModelDiff } from "./diff.js";
 export { focusSet, type FocusResult, type FocusMore, type FocusOpts } from "./focus.js";
 export { matchNodes, KIND_ALIASES } from "./search.js";
+export { applyFilters, emptyFilters, filtersActive, subtreeHasKind, type Filters } from "./filter.js";
