@@ -5,3 +5,4 @@ packages/plugin/src/styles.ts
 .superpowers/
 .eslintcache
 /map.html
+dev/.headlamp/

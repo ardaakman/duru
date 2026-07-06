@@ -45,7 +45,15 @@ mkdir -p ~/.config/Headlamp/plugins/duru
 cp packages/plugin/dist/main.js packages/plugin/package.json ~/.config/Headlamp/plugins/duru/
 ```
 
-Restart Headlamp → Duru in the sidebar. Dev loop: `cd packages/plugin && npm start`.
+Restart Headlamp → Duru in the sidebar.
+
+Developing duru itself? Two terminals:
+
+```bash
+./dev/headlamp.sh up   # local Headlamp container (uses your kubeconfig; trusted networks only)
+npm run dev            # watch-build + auto-deploy; refresh the tab after each rebuild
+```
+
 Manual checklist: [dev/acceptance.md](dev/acceptance.md).
 
 ## License

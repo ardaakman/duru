@@ -20,7 +20,9 @@
     "pretest": "npm run build:web && npm run build --workspace @duru/core",
     "test": "vitest run",
     "cli": "tsx src/cli.ts",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "dev": "node scripts/dev.mjs",
+    "dev:headlamp": "bash dev/headlamp.sh up"
   },
   "dependencies": {
     "yaml": "^2.5.0"
