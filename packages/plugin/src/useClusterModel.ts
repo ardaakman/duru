@@ -3,6 +3,7 @@ import { diffModels } from "@duru/core";
 import { K8s } from "@kinvolk/headlamp-plugin/lib";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { buildLiveModel } from "./adapter";
+import { fetchAllCRs } from "./crds";
 
 const KINDS: [string, any][] = [
   ["Pod", K8s.ResourceClasses.Pod], ["Deployment", K8s.ResourceClasses.Deployment],
@@ -22,14 +23,49 @@ function applyHealthPatches(m: GraphModel, patches: Map<string, Health>): GraphM
   return { ...m, nodes: m.nodes.map((n) => (patches.has(n.id) ? { ...n, health: patches.get(n.id) } : n)) };
 }
 
-export function useClusterModel() {
+export function useClusterModel(opts: { crs?: boolean } = {}) {
   // Hooks called in a FIXED order (KINDS is module-constant) — rules-of-hooks safe.
   const results = KINDS.map(([, rc]) => rc.useList());
+  // 19th fixed hook: CRD catalog (definitions only, always mounted). Capture the error too —
+  // a user without CRD RBAC otherwise gets a toggle that silently does nothing.
+  const [crdDefs, crdErr] = K8s.ResourceClasses.CustomResourceDefinition.useList();
   const [displayed, setDisplayed] = useState<GraphModel | null>(null);
   const [pending, setPending] = useState(0);
   const [structureRev, setStructureRev] = useState(0);
   const candidateRef = useRef<GraphModel | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // CR instances: fetched imperatively (not a hook) on toggle-on and every 30s while on.
+  const [crData, setCrData] = useState<{ objects: any[]; warnings: string[] }>({ objects: [], warnings: [] });
+  const [crFetchCount, setCrFetchCount] = useState(0);   // bumps on EVERY completed fetch → debounce dep
+  const [crLoading, setCrLoading] = useState(false);
+  const crBusy = useRef(false);
+  const crFirst = useRef(true);
+  useEffect(() => {
+    if (!opts.crs) { setCrData({ objects: [], warnings: [] }); setCrFetchCount((c) => c + 1); setCrLoading(false); crFirst.current = true; return; }
+    let stop = false;
+    const run = async () => {
+      if (crBusy.current) return;                        // overlap guard
+      crBusy.current = true;
+      if (crFirst.current) setCrLoading(true);           // spinner on the FIRST fetch only (spec §4)
+      try {
+        const res = await fetchAllCRs(crdDefs ? crdDefs.map((c: any) => c?.jsonData) : []);
+        if (stop) return;
+        crFirst.current = false;
+        setCrData(res);
+        setCrFetchCount((c) => c + 1);
+      } finally {
+        crBusy.current = false;                          // never sticks on a throw
+        if (!stop) setCrLoading(false);
+      }
+    };
+    run();
+    const t = setInterval(run, 30_000);
+    return () => { stop = true; clearInterval(t); };
+    // crdDefs?.length (not crdDefs): content-only CRD changes wait for the next 30s tick
+    // BY DESIGN — depping the array identity would refetch-storm on every watch tick.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [opts.crs, crdDefs?.length]);
 
   const warnings: string[] = [];
   const lists: (any[] | null)[] = results.map(([items, error], i) => {
@@ -48,11 +84,17 @@ export function useClusterModel() {
   // loading are kept as auxiliary triggers for hook-error/loading-state transitions.
   const itemsRefs = results.map(([items]) => items);
 
+  // CR warnings flow through the hook's existing warnings array — no separate channel —
+  // so the top bar's single ⚠ chip picks them up automatically.
+  const crCatalogWarn = opts.crs && crdErr ? [`CustomResourceDefinitions unavailable: ${String(crdErr)}`] : [];
+  const allWarnings = [...warnings, ...crData.warnings, ...crCatalogWarn];
+  const mergedLists = crData.objects.length ? [...lists, crData.objects] : lists;
+
   useEffect(() => {
     if (loading) return;
     if (timerRef.current) clearTimeout(timerRef.current);
     timerRef.current = setTimeout(() => {
-      const candidate = buildLiveModel(lists, warnings);
+      const candidate = buildLiveModel(mergedLists, allWarnings);
       candidateRef.current = candidate;
       setDisplayed((cur) => {
         if (cur === null) { setStructureRev((r) => r + 1); setPending(0); return candidate; }  // first adopt
@@ -63,7 +105,7 @@ export function useClusterModel() {
     }, 500);
     return () => { if (timerRef.current) clearTimeout(timerRef.current); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [...itemsRefs, warnings.length, loading]);
+  }, [...itemsRefs, warnings.length, loading, crFetchCount]);
 
   const refresh = useCallback(() => {
     if (candidateRef.current) {
@@ -73,5 +115,5 @@ export function useClusterModel() {
     }
   }, []);
 
-  return { model: displayed, pending, refresh, structureRev, loading, warnings };
+  return { model: displayed, pending, refresh, structureRev, loading, warnings: allWarnings, crLoading };
 }
