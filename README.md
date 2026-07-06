@@ -39,15 +39,34 @@ shows the worst health hiding beneath it.
 
 Lives in [`packages/`](packages/) (`@duru/core` + `headlamp-plugin-duru`).
 
+Install: one command drops the prebuilt plugin into Headlamp's plugins
+folder. Restart Headlamp and Duru appears in the sidebar for every cluster.
+
+Linux:
+
+```bash
+mkdir -p ~/.config/Headlamp/plugins
+curl -L https://github.com/ardaakman/duru/releases/latest/download/duru-headlamp-plugin.tar.gz | tar xz -C ~/.config/Headlamp/plugins
+```
+
+macOS:
+
+```bash
+mkdir -p ~/Library/Application\ Support/Headlamp/plugins
+curl -L https://github.com/ardaakman/duru/releases/latest/download/duru-headlamp-plugin.tar.gz | tar xz -C ~/Library/Application\ Support/Headlamp/plugins
+```
+
+Windows (PowerShell): extract the same tarball into
+`$env:APPDATA\Headlamp\Config\plugins`.
+
+Building from source instead: `npm install && npm run build`, then copy
+`packages/plugin/dist/main.js` and `packages/plugin/package.json` into
+`<plugins-dir>/duru/`. No cluster handy? There's a demo:
+
 ```bash
 kind create cluster --name duru-demo
 kubectl --context kind-duru-demo apply -f dev/kind-demo.yaml
-npm install && npm run build
-mkdir -p ~/.config/Headlamp/plugins/duru
-cp packages/plugin/dist/main.js packages/plugin/package.json ~/.config/Headlamp/plugins/duru/
 ```
-
-Restart Headlamp → Duru in the sidebar.
 
 Developing duru itself? Two terminals:
 
