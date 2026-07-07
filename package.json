@@ -1,6 +1,6 @@
 {
   "name": "duru",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "duru — see your Kubernetes cluster clearly: offline HTML maps from manifests or dumps (CLI), and a live map inside Headlamp (plugin)",
   "license": "Apache-2.0",
   "type": "module",
