@@ -19,8 +19,11 @@ function FitOnChange({ rootSignal, focusSignal }: { rootSignal: string; focusSig
   }, [rootSignal, rf]);
   useEffect(() => {
     if (!focusSignal.id) return;
-    const t = setTimeout(() => rf.fitView({ nodes: [{ id: focusSignal.id! }] as any, duration: 380, maxZoom: 1 }), 80);
-    return () => clearTimeout(t);
+    const fit = () => rf.fitView({ nodes: [{ id: focusSignal.id! }] as any, duration: 380, maxZoom: 1 });
+    // Second attempt: freshly-revealed nodes may not be measured yet, making the first fit a no-op.
+    const t1 = setTimeout(fit, 80);
+    const t2 = setTimeout(fit, 500);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
   }, [focusSignal.n, rf]);
   return null;
 }

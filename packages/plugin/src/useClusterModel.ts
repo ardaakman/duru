@@ -3,7 +3,7 @@ import { diffModels } from "@duru/core";
 import { K8s } from "@kinvolk/headlamp-plugin/lib";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { buildLiveModel } from "./adapter";
-import { fetchAllCRs } from "./crds";
+import { fetchAllCRs, fetchCrdDefs } from "./crds";
 
 const KINDS: [string, any][] = [
   ["Pod", K8s.ResourceClasses.Pod], ["Deployment", K8s.ResourceClasses.Deployment],
@@ -26,9 +26,6 @@ function applyHealthPatches(m: GraphModel, patches: Map<string, Health>): GraphM
 export function useClusterModel(opts: { crs?: boolean } = {}) {
   // Hooks called in a FIXED order (KINDS is module-constant) — rules-of-hooks safe.
   const results = KINDS.map(([, rc]) => rc.useList());
-  // 19th fixed hook: CRD catalog (definitions only, always mounted). Capture the error too —
-  // a user without CRD RBAC otherwise gets a toggle that silently does nothing.
-  const [crdDefs, crdErr] = K8s.ResourceClasses.CustomResourceDefinition.useList();
   const [displayed, setDisplayed] = useState<GraphModel | null>(null);
   const [pending, setPending] = useState(0);
   const [structureRev, setStructureRev] = useState(0);
@@ -36,20 +33,30 @@ export function useClusterModel(opts: { crs?: boolean } = {}) {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // CR instances: fetched imperatively (not a hook) on toggle-on and every 30s while on.
+  // The CRD catalog is fetched once per toggle-on and cached — CRDs change rarely, and the
+  // list is heavy; toggle off/on to pick up a brand-new CRD.
   const [crData, setCrData] = useState<{ objects: any[]; warnings: string[] }>({ objects: [], warnings: [] });
   const [crFetchCount, setCrFetchCount] = useState(0);   // bumps on EVERY completed fetch → debounce dep
   const [crLoading, setCrLoading] = useState(false);
   const crBusy = useRef(false);
   const crFirst = useRef(true);
+  const crdCache = useRef<any[] | null>(null);
   useEffect(() => {
-    if (!opts.crs) { setCrData({ objects: [], warnings: [] }); setCrFetchCount((c) => c + 1); setCrLoading(false); crFirst.current = true; return; }
+    if (!opts.crs) { setCrData({ objects: [], warnings: [] }); setCrFetchCount((c) => c + 1); setCrLoading(false); crFirst.current = true; crdCache.current = null; return; }
     let stop = false;
     const run = async () => {
       if (crBusy.current) return;                        // overlap guard
       crBusy.current = true;
       if (crFirst.current) setCrLoading(true);           // spinner on the FIRST fetch only (spec §4)
       try {
-        const res = await fetchAllCRs(crdDefs ? crdDefs.map((c: any) => c?.jsonData) : []);
+        if (!crdCache.current) {
+          try { crdCache.current = await fetchCrdDefs(); }
+          catch (e: any) {
+            if (!stop) { setCrData({ objects: [], warnings: [`CustomResourceDefinitions unavailable: ${e?.message ?? String(e)}`] }); setCrFetchCount((c) => c + 1); }
+            return;                                      // retry catalog on the next tick
+          }
+        }
+        const res = await fetchAllCRs(crdCache.current);
         if (stop) return;
         crFirst.current = false;
         setCrData(res);
@@ -62,17 +69,21 @@ export function useClusterModel(opts: { crs?: boolean } = {}) {
     run();
     const t = setInterval(run, 30_000);
     return () => { stop = true; clearInterval(t); };
-    // crdDefs?.length (not crdDefs): content-only CRD changes wait for the next 30s tick
-    // BY DESIGN — depping the array identity would refetch-storm on every watch tick.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [opts.crs, crdDefs?.length]);
+  }, [opts.crs]);
 
+  // GRACE: one stuck kind list (huge payload, sick apiserver path) must not hold the whole
+  // map at "connecting…" forever — after 20s render what we have and warn; the missing
+  // list merges in via the normal debounce/↻ path whenever it finally lands.
+  const [grace, setGrace] = useState(false);
+  useEffect(() => { const t = setTimeout(() => setGrace(true), 20_000); return () => clearTimeout(t); }, []);
   const warnings: string[] = [];
   const lists: (any[] | null)[] = results.map(([items, error], i) => {
     if (error) { warnings.push(`${KINDS[i][0]} unavailable: ${String(error)}`); return null; }
+    if (items === null && grace) warnings.push(`${KINDS[i][0]} not loaded yet — slow or failing list; will appear when available`);
     return items ? items.map((o: any) => o.jsonData) : null;
   });
-  const loading = displayed === null && results.some(([items, error]) => items === null && !error);
+  const anyArrived = results.some(([items]) => items !== null);
+  const loading = displayed === null && results.some(([items, error]) => items === null && !error) && !(grace && anyArrived);
 
   // Debounce trigger: depend on each kind's `items` array IDENTITY, not a length-derived
   // string. Verified against the installed lib (useKubeObjectList.js): useList()'s `items`
@@ -84,10 +95,9 @@ export function useClusterModel(opts: { crs?: boolean } = {}) {
   // loading are kept as auxiliary triggers for hook-error/loading-state transitions.
   const itemsRefs = results.map(([items]) => items);
 
-  // CR warnings flow through the hook's existing warnings array — no separate channel —
-  // so the top bar's single ⚠ chip picks them up automatically.
-  const crCatalogWarn = opts.crs && crdErr ? [`CustomResourceDefinitions unavailable: ${String(crdErr)}`] : [];
-  const allWarnings = [...warnings, ...crData.warnings, ...crCatalogWarn];
+  // CR warnings (incl. catalog failures) flow through the hook's existing warnings
+  // array — no separate channel — so the top bar's single ⚠ chip picks them up.
+  const allWarnings = [...warnings, ...crData.warnings];
   const mergedLists = crData.objects.length ? [...lists, crData.objects] : lists;
 
   useEffect(() => {

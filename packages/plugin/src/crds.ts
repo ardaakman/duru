@@ -13,6 +13,14 @@ export function injectTypeMeta(items: any[], crd: any, version: string): any[] {
   return items.map((it) => (it.kind && it.apiVersion ? it : { ...it, kind, apiVersion }));
 }
 
+// CRD catalog, fetched ONLY while the CRs toggle is on. Never a hook/watch: the full
+// CRD list (embedded schemas) can be tens of MB on real clusters — an always-mounted
+// watch stalled map loading and froze the UI during JSON parses.
+export async function fetchCrdDefs(): Promise<any[]> {
+  const res: any = await ApiProxy.request("/apis/apiextensions.k8s.io/v1/customresourcedefinitions");
+  return res?.items ?? [];
+}
+
 // Fetch every CRD's instances via the host ApiProxy (cluster-wide list endpoints).
 // Caps per spec §3; each failure degrades to ONE warning and skips that CRD.
 export async function fetchAllCRs(crds: any[], caps: { perCrd?: number; total?: number } = {}): Promise<{ objects: any[]; warnings: string[] }> {
