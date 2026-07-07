@@ -11,12 +11,24 @@ import { TopBar } from "./TopBar";
 
 const nodeTypes = { card: CardNode };
 
-function FitOnChange({ rootSignal, focusSignal }: { rootSignal: string; focusSignal: { id: string | null; n: number } }) {
+function FitOnChange({ rootSignal, focusSignal, centerSignal }: {
+  rootSignal: string; focusSignal: { id: string | null; n: number }; centerSignal: { id: string | null; n: number };
+}) {
   const rf = useReactFlow();
   useEffect(() => {
     const t = setTimeout(() => rf.fitView({ duration: 380, padding: 0.2 }), 60);
     return () => clearTimeout(t);
   }, [rootSignal, rf]);
+  // Keep the toggled node under the cursor's eye: re-layout moves it, so pan (same zoom) to it.
+  useEffect(() => {
+    if (!centerSignal.id) return;
+    const center = () => {
+      const n = rf.getNode(centerSignal.id!);
+      if (n) rf.setCenter(n.position.x + (n.width ?? 210) / 2, n.position.y + (n.height ?? 48) / 2, { zoom: rf.getZoom(), duration: 300 });
+    };
+    const t = setTimeout(center, 80);
+    return () => clearTimeout(t);
+  }, [centerSignal.n, rf]);
   useEffect(() => {
     if (!focusSignal.id) return;
     const fit = () => rf.fitView({ nodes: [{ id: focusSignal.id! }] as any, duration: 380, maxZoom: 1 });
@@ -50,7 +62,18 @@ export function App({ model, pending, onRefresh, structureRev, warnings, dark, c
   const [focusSignal, setFocusSignal] = useState<{ id: string | null; n: number }>({ id: null, n: 0 });
   const [dimmed, setDimmed] = useState<Set<string>>(new Set());
   const [filters, setFilters] = useState<Filters>(emptyFilters());
-  const toggle = (id: string) => setCollapsed((s) => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; });
+  const [centerSignal, setCenterSignal] = useState<{ id: string | null; n: number }>({ id: null, n: 0 });
+  const [fitBump, setFitBump] = useState(0);
+  const toggle = (id: string) => {
+    setCollapsed((s) => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; });
+    setCenterSignal((c) => ({ id, n: c.n + 1 }));   // re-layout moves the node — follow it
+  };
+  const collapseAll = () => {
+    setFocus(null);
+    setRoot(null);
+    setCollapsed(() => { const c = new Set<string>(); for (const [id, kids] of forest.childrenOf) if (kids.length) c.add(id); return c; });
+    setFitBump((b) => b + 1);                        // re-fit the overview even when root was already null
+  };
   const toggleFamily = (f: string) => setDimmed((s) => { const n = new Set(s); n.has(f) ? n.delete(f) : n.add(f); return n; });
   const drill = (id: string) => { setFocus(null); if (childCount(forest, id) > 0) { setCollapsed((s) => { const x = new Set(s); x.delete(id); return x; }); setRoot(id); } };
   const [focus, setFocus] = useState<string | null>(null);
@@ -211,7 +234,7 @@ export function App({ model, pending, onRefresh, structureRev, warnings, dark, c
         warnings={localWarn ? [...warnings, localWarn] : warnings} pending={pending} onRefresh={onRefresh}
         focusName={focus ? forest.byId.get(focus)?.name ?? null : null} truncated={focusRes?.truncated ?? false} onExitFocus={exitFocus}
         filters={filters} onFilters={setFilters} filterMeta={filterMeta} filtersSuspended={!!focus}
-        crs={crs} onCrs={onCrs} crLoading={crLoading} />
+        crs={crs} onCrs={onCrs} crLoading={crLoading} onCollapseAll={collapseAll} />
       <div className="duru-stage">
         <ReactFlow
           nodes={nodes} edges={edges} nodeTypes={nodeTypes} fitView minZoom={0.2} onlyRenderVisibleElements
@@ -223,7 +246,7 @@ export function App({ model, pending, onRefresh, structureRev, warnings, dark, c
           <Background color={bgDots(dark)} gap={22} />
           <Controls showInteractive={false} />
           <Panel position="bottom-right"><Legend activeTraceTypes={trace.types} dimmed={dimmed} onToggleFamily={toggleFamily} /></Panel>
-          <FitOnChange rootSignal={(root ?? "__all__") + ":" + (focus ?? "-") + ":" + structureRev + ":" + filterKey} focusSignal={focusSignal} />
+          <FitOnChange rootSignal={(root ?? "__all__") + ":" + (focus ?? "-") + ":" + structureRev + ":" + filterKey + ":" + fitBump} focusSignal={focusSignal} centerSignal={centerSignal} />
         </ReactFlow>
         {selected ? <Inspector model={model} byId={forest.byId} id={selected} onClose={() => setSelected(null)} onSelect={reveal} onFocus={enterFocus} /> : null}
         {(!focusRes && filtersActive(filters) && nodes.length === 0) ? (

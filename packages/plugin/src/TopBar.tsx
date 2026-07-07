@@ -3,7 +3,7 @@ import { emptyFilters, filtersActive, matchNodes } from "@duru/core";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 export function TopBar({ searchNodes, crumbs, onCrumb, onAll, onPick, hint, warnings, pending, onRefresh,
-  focusName, truncated, onExitFocus, filters, onFilters, filterMeta, filtersSuspended, crs, onCrs, crLoading }: {
+  focusName, truncated, onExitFocus, filters, onFilters, filterMeta, filtersSuspended, crs, onCrs, crLoading, onCollapseAll }: {
   searchNodes: Node[]; crumbs: { id: string; name: string }[];
   onCrumb: (id: string) => void; onAll: () => void; onPick: (id: string) => void; hint: string;
   warnings: string[]; pending: number; onRefresh: () => void;
@@ -11,6 +11,7 @@ export function TopBar({ searchNodes, crumbs, onCrumb, onAll, onPick, hint, warn
   filters: Filters; onFilters: (f: Filters) => void;
   filterMeta: { namespaces: [string, number][]; kinds: [string, number][] };
   filtersSuspended: boolean; crs: boolean; onCrs: (v: boolean) => void; crLoading: boolean;
+  onCollapseAll: () => void;
 }) {
   const [q, setQ] = useState("");
   const [active, setActive] = useState(0);
@@ -99,6 +100,8 @@ export function TopBar({ searchNodes, crumbs, onCrumb, onAll, onPick, hint, warn
           title="Include the cluster's custom resources (fetched every 30s)">
           {crLoading ? "CRs…" : "CRs"}
         </button>
+        <button className="duru-toolbtn" onClick={onCollapseAll}
+          title="Fold everything back to the top-level overview">⊟ collapse all</button>
         {focusName ? (
           <div className="duru-crumbs">
             <button className="duru-crumb" onClick={onExitFocus}>all</button>
