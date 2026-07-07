@@ -69,10 +69,10 @@ export function App({ model, pending, onRefresh, structureRev, warnings, dark, c
     setCenterSignal((c) => ({ id, n: c.n + 1 }));   // re-layout moves the node — follow it
   };
   const collapseAll = () => {
-    setFocus(null);
-    setRoot(null);
-    setCollapsed(() => { const c = new Set<string>(); for (const [id, kids] of forest.childrenOf) if (kids.length) c.add(id); return c; });
-    setFitBump((b) => b + 1);                        // re-fit the overview even when root was already null
+    if (focusRef.current) { setFocus(null); return; }  // focused: return to the tree first
+    // Fold only what's on screen — keep the drill root/crumbs (ids is this render's visible set).
+    setCollapsed((s) => { const c = new Set(s); for (const id of ids) if (childCount(forest, id) > 0) c.add(id); return c; });
+    setFitBump((b) => b + 1);                          // re-fit the (now smaller) view
   };
   const toggleFamily = (f: string) => setDimmed((s) => { const n = new Set(s); n.has(f) ? n.delete(f) : n.add(f); return n; });
   const drill = (id: string) => { setFocus(null); if (childCount(forest, id) > 0) { setCollapsed((s) => { const x = new Set(s); x.delete(id); return x; }); setRoot(id); } };

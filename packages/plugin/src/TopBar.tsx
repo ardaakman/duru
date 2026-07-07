@@ -101,7 +101,7 @@ export function TopBar({ searchNodes, crumbs, onCrumb, onAll, onPick, hint, warn
           {crLoading ? "CRs…" : "CRs"}
         </button>
         <button className="duru-toolbtn" onClick={onCollapseAll}
-          title="Fold everything back to the top-level overview">⊟ collapse all</button>
+          title="Fold everything currently expanded in this view (keeps your drill-down)">⊟ collapse all</button>
         {focusName ? (
           <div className="duru-crumbs">
             <button className="duru-crumb" onClick={onExitFocus}>all</button>
